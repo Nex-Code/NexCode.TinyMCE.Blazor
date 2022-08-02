@@ -2,11 +2,32 @@
 
 
 
-<RichTextEditor/>
+<RichTextEditor DynamicPlugins="@(new []{plugin})" />
 
 
 @code
 {
 
+
+
+    private BlazorPlugin plugin = new BlazorPlugin()
+    {
+        Name = "Test",
+        Buttons = new List<BlazorPlugin.BaseAction>()
+        {
+            new BlazorPlugin.BaseAction()
+            {
+                OnAction = TestCall,
+                Text = "Call test"
+            }
+        }
+    };
+
+
+
+    private static void TestCall()
+    {
+
+    }
 
 }

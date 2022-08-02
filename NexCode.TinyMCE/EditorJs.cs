@@ -10,12 +10,17 @@ namespace NexCode.TinyMCEEditor
         private readonly Lazy<Task<IJSObjectReference>> _moduleTask;
         private JsLoader JsLoader { get; }
 
-        public EditorJs(IJSRuntime jsRuntime, JsLoader jsLoader)
+        private IEnumerable<JsPlugin> Plugins { get; }
+
+        public EditorJs(IJSRuntime jsRuntime, JsLoader jsLoader, IEnumerable<JsPlugin> plugins)
         {
             JsLoader = jsLoader;
             _moduleTask = new(() => jsRuntime.InvokeAsync<IJSObjectReference>(
                 "import", "./_content/NexCode.TinyMCE.Blazor/editorJs.js").AsTask());
+            Plugins = plugins;
         }
+
+
 
         public async ValueTask Load(bool waitForLoad = false)
         {
@@ -31,15 +36,57 @@ namespace NexCode.TinyMCEEditor
                 JsLoader.Load(url);
         }
 
-
-
-        public async ValueTask Init(string id, string? plugins = null, string? menubar = null, string? toolbar = null)
+        public async ValueTask Init(string id, string? plugins = null, string? menubar = null, string? toolbar = null, IEnumerable<BlazorPlugin>? blazorPlugins = null)
         {
             await Load(true);
 
+
+            var externalPlugins = new Dictionary<string,string>();
+            if (!plugins.IsNullOrWhiteSpace())
+            {
+                var pList = plugins.Split(" ").ToHashSet();
+
+                foreach (var plugin in Plugins)
+                {
+                    if (pList.Contains(plugin.Name))
+                    {
+                        pList.Remove(plugin.Name);
+                        externalPlugins.Add(plugin.Name, plugin.JsUrl);
+                    }
+                }
+
+                plugins = string.Join(" ", pList);
+
+            }
+
+            if (blazorPlugins?.Any() ?? false)
+            {
+                foreach (var plugin in blazorPlugins)
+                {
+                    await RegisterPlugin(plugin);
+                    plugins += " "+plugin.Name.ToLower();
+                    toolbar += " | " + plugin.Name.ToLower();
+                }
+                    
+            }
+
+
             var module = await _moduleTask.Value;
-            await module.InvokeVoidAsync("init", id, plugins, menubar, toolbar);
+            await module.InvokeVoidAsync("init", id, plugins, menubar, toolbar, externalPlugins);
         }
+
+
+        private async ValueTask RegisterPlugin(BlazorPlugin plugin)
+        {
+            var module = await _moduleTask.Value;
+
+            var buttons = plugin.Buttons.Select(i=>new {i.Text, dotNethelper = DotNetObjectReference.Create(i), });
+            var menuItems = plugin.MenuItems.Select(i => new { i.Text, dotNethelper = DotNetObjectReference.Create(i) });
+
+            await module.InvokeVoidAsync("registerPlugin", plugin.Name.ToLower(), buttons, menuItems);
+        }
+
+
 
         public async ValueTask DisposeAsync()
         {

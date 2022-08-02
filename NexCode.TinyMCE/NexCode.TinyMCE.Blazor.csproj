@@ -7,6 +7,12 @@
     <Copyright>NexCode</Copyright>
     <Company>$(Authors)</Company>
     <Description>A Blazor wrapper for TinyMCE</Description>
+    <Title>NexCode.TinyMCE.Blazor</Title>
+    <PackageProjectUrl>https://github.com/Nex-Code/NexCode.TinyMCE.Blazor</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Nex-Code/NexCode.TinyMCE.Blazor</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
 
 
@@ -17,6 +23,13 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="6.0.6" />
     <PackageReference Include="TinyMCE" Version="6.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="LICENSE.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

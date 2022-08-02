@@ -22,12 +22,16 @@ export function LoadJs(url, dotNethelper, method) {
 
 }
 
-export function init(id, plugins, menubar, toolbar) {
+
+
+
+export function init(id, plugins, menubar, toolbar, external_plugins) {
     tinymce.init({
         selector: "#" + id,
         plugins: plugins,
         toolbar: toolbar,
-        menubar: menubar
+        menubar: menubar,
+        external_plugins: external_plugins
     });
 }
 
@@ -37,4 +41,32 @@ export function setContent(id, content) {
 
 export function getContent(id) {
     return tinymce.get(id).getContent();
+}
+
+
+export function registerPlugin(id, buttons, menuItems) {
+
+    tinymce.PluginManager.add(id,
+        function(editor, url) {
+
+
+            buttons.forEach(function(b)
+            {
+                editor.ui.registry.addButton(id, {
+                    text: b.text,
+                    onAction: function () {
+                        return b.dotNethelper.invokeMethodAsync("TriggerAction");
+                    }
+                });
+            });
+
+            menuItems.forEach(function (b) {
+                editor.ui.registry.addMenuItem(id, {
+                    text: b.text,
+                    onAction: function () {
+                        return b.dotNethelper.invokeMethodAsync("TriggerAction");
+                    }
+                });
+            });
+        });
 }

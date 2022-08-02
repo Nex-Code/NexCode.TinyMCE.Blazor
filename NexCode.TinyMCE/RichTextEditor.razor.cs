@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using NexCode.TinyMCEEditor;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace NexCode.TinyMCE.Blazor
 {
@@ -15,17 +16,11 @@ namespace NexCode.TinyMCE.Blazor
 
         [Inject] private EditorJs Js { get; set; } = default!;
 
-        [Parameter] public RichTextDefaultEditorOptions Options { get; set; } = new();
+        [Parameter] 
+        public RichTextDefaultEditorOptions Options { get; set; } = new();
 
+        [Inject]
         private RichTextDefaultEditorOptions? DefaultOptions { get; set; }
-
-        public RichTextEditor() { }
-
-        public RichTextEditor(RichTextDefaultEditorOptions? defaultOptions) : this()
-        {
-            DefaultOptions = defaultOptions;
-        }
-
 
         [Parameter]
         public string? Toolbar
@@ -46,9 +41,12 @@ namespace NexCode.TinyMCE.Blazor
             set => Options.MenuBar = value;
         }
 
-
         [Parameter]
         public RenderFragment? ChildContent { get; set; }
+
+        [Parameter] public IEnumerable<BlazorPlugin> DynamicPlugins { get; set; } = Array.Empty<BlazorPlugin>();
+
+        
 
 
         protected override async Task OnInitializedAsync()
@@ -70,7 +68,7 @@ namespace NexCode.TinyMCE.Blazor
             Plugins = TrimAndClean(Plugins);
             MenuBar = TrimAndClean(MenuBar);
 
-            await Js.Init(Id, Plugins, MenuBar, Toolbar);
+            await Js.Init(Id, Plugins, MenuBar, Toolbar, DynamicPlugins);
         }
 
         private string? TrimAndClean(string? str)
