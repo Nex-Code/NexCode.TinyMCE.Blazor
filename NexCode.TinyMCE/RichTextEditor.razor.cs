@@ -12,12 +12,12 @@ namespace NexCode.TinyMCE.Blazor
 {
     public partial class RichTextEditor : ComponentBase
     {
-        private string Id { get; } = "editor_"+ Guid.NewGuid().ToString().Replace("-","");
+        public string Id { get; } = "editor_"+ Guid.NewGuid().ToString().Replace("-","");
 
         [Inject] private EditorJs Js { get; set; } = default!;
 
         [Parameter] 
-        public RichTextDefaultEditorOptions Options { get; set; } = new();
+        public RichTextEditorOptions Options { get; set; } = new();
 
         [Inject]
         private RichTextDefaultEditorOptions? DefaultOptions { get; set; }
@@ -82,8 +82,6 @@ namespace NexCode.TinyMCE.Blazor
 
 
 
-
-
         public async ValueTask<string> GetHtml()
         {
             var html =  await Js.GetContent(Id);
@@ -92,7 +90,12 @@ namespace NexCode.TinyMCE.Blazor
 
             return html;
         }
-        
+
+        public async ValueTask SetHtml(string? html)
+        {
+            await Js.SetContent(Id, html);
+            StateHasChanged();
+        }
 
 
     }
