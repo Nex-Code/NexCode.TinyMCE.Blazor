@@ -13,6 +13,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <Version>$(VersionPrefix)</Version>
   </PropertyGroup>
 
 
@@ -31,5 +32,11 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
+
+	<PropertyGroup Condition=" '$(Version)' == '' ">
+		<VersionPrefix Condition=" '$(VersionPrefix)' == '' ">1.0.1.3</VersionPrefix>
+		<Version Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix)-$(VersionSuffix)</Version>
+		<Version Condition=" '$(Version)' == '' ">$(VersionPrefix)</Version>
+	</PropertyGroup>
 
 </Project>
