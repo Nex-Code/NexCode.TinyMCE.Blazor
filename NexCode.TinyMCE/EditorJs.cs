@@ -36,6 +36,12 @@ namespace NexCode.TinyMCEEditor
                 JsLoader.Load(url);
         }
 
+        public async ValueTask Destroy(string id)
+        {
+            var module = await _moduleTask.Value;
+            await module.InvokeVoidAsync("destroy", id);
+        }
+
         public async ValueTask Init(string id, string? plugins = null, string? menubar = null, string? toolbar = null, IEnumerable<BlazorPlugin>? blazorPlugins = null)
         {
             await Load(true);

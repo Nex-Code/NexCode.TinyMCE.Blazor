@@ -29,7 +29,7 @@ export function init(id, plugins, menubar, toolbar, external_plugins) {
     tinymce.init({
         selector: "#" + id,
         plugins: plugins,
-        toolbar: toolbar+" mybutton",
+        toolbar: toolbar,
         menubar: menubar,
         external_plugins: external_plugins,
         setup:(editor) => {
@@ -119,4 +119,14 @@ function buildMenuItems(menuItem) {
         onAction: () => menuItem.dotNethelper.invokeMethodAsync("TriggerAction")
     }
 
+}
+
+
+export function destroy(id) {
+    var editor = tinymce.get(id);
+
+    if (editor == null)
+        return null;
+
+    return editor.destroy();
 }
