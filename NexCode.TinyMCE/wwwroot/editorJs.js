@@ -36,11 +36,21 @@ export function init(id, plugins, menubar, toolbar, external_plugins) {
 }
 
 export function setContent(id, content) {
-    tinymce.get(id).setContent(content);
+    var editor = tinymce.get(id);
+
+    if (editor == null)
+        return;
+
+    editor.setContent(content);
 }
 
 export function getContent(id) {
-    return tinymce.get(id).getContent();
+    var editor = tinymce.get(id);
+
+    if (editor == null)
+        return null;
+
+    return editor.get(id).getContent();
 }
 
 
