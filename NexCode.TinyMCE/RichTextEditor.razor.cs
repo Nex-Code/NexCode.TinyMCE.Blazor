@@ -46,8 +46,8 @@ namespace NexCode.TinyMCE.Blazor
 
         [Parameter] public IEnumerable<BlazorPlugin> DynamicPlugins { get; set; } = Array.Empty<BlazorPlugin>();
 
-        
 
+        [Parameter] public bool LoadOnRender { get; set; } = true;
 
         protected override async Task OnInitializedAsync()
         {
@@ -56,20 +56,34 @@ namespace NexCode.TinyMCE.Blazor
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if (firstRender)
+            if (firstRender && LoadOnRender)
             {
-                await LoadEditor();
+                await Load();
             }
         }
 
-        private async Task LoadEditor()
+        public async Task Load()
         {
             Toolbar = TrimAndClean(Toolbar);
             Plugins = TrimAndClean(Plugins);
             MenuBar = TrimAndClean(MenuBar);
 
+            DynamicPlugins = DynamicPlugins.Where(i => i != null).ToArray();
+
             await Js.Init(Id, Plugins, MenuBar, Toolbar, DynamicPlugins);
         }
+
+        public async Task Destroy()
+        {
+            await Js.Destroy(Id);
+        }
+
+        public async Task Refresh()
+        {
+            await Destroy();
+            await Load();
+        }
+
 
         private string? TrimAndClean(string? str)
         {
