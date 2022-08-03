@@ -64,10 +64,7 @@ namespace NexCode.TinyMCEEditor
                 foreach (var plugin in blazorPlugins)
                 {
                     await RegisterPlugin(plugin);
-                    plugins += " "+plugin.Name.ToLower();
-                    toolbar += " | " + plugin.Name.ToLower();
                 }
-                    
             }
 
 
