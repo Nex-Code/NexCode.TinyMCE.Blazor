@@ -96,12 +96,14 @@ namespace NexCode.TinyMCEEditor
 
         public async ValueTask SetContent(string id, string? str)
         {
+            await Load(true);
             var module = await _moduleTask.Value;
             await module.InvokeVoidAsync("setContent",id, str);
         }
 
         public async ValueTask<string> GetContent(string id)
         {
+            await Load(true);
             var module = await _moduleTask.Value;
             return await module.InvokeAsync<string>("getContent",id);
         }
