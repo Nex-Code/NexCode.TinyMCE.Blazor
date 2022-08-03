@@ -29,9 +29,13 @@ export function init(id, plugins, menubar, toolbar, external_plugins) {
     tinymce.init({
         selector: "#" + id,
         plugins: plugins,
-        toolbar: toolbar,
+        toolbar: toolbar+" mybutton",
         menubar: menubar,
-        external_plugins: external_plugins
+        external_plugins: external_plugins,
+        setup:(editor) => {
+            
+
+        }
     });
 }
 
@@ -54,11 +58,26 @@ export function getContent(id) {
 }
 
 
-export function registerPlugin(id, buttons, menuItems) {
+export function registerPlugin(id, buttons, menuItems, toolbarButtons) {
+
+    if (tinymce.PluginManager.lookup[id] != null) {
+        tinymce.PluginManager.remove(id);
+    }
+
 
     tinymce.PluginManager.add(id,
         function(editor, url) {
 
+            toolbarButtons.forEach(function(b) {
+
+                editor.ui.registry.addMenuButton(id, {
+                    text: b.text,
+                    fetch: (callback) => {
+                        const items = b.items.map((item) => buildMenuItems(item));
+                        callback(items);
+                    }
+                });
+            })
 
             buttons.forEach(function(b)
             {
@@ -79,4 +98,25 @@ export function registerPlugin(id, buttons, menuItems) {
                 });
             });
         });
+}
+
+
+function buildMenuItems(menuItem) {
+
+    if (menuItem.items != null) {
+
+        return {
+            text: menuItem.text,
+            type: 'nestedmenuitem',
+            getSubmenuItems: () => menuItem.items.map((item) => buildMenuItems(item))
+        };
+
+    }
+
+    return {
+        type: 'menuitem',
+        text: menuItem.text,
+        onAction: () => menuItem.dotNethelper.invokeMethodAsync("TriggerAction")
+    }
+
 }

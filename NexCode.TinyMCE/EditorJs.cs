@@ -79,10 +79,24 @@ namespace NexCode.TinyMCEEditor
 
             var buttons = plugin.Buttons.Select(i=>new {i.Text, dotNethelper = DotNetObjectReference.Create(i), });
             var menuItems = plugin.MenuItems.Select(i => new { i.Text, dotNethelper = DotNetObjectReference.Create(i) });
-
-            await module.InvokeVoidAsync("registerPlugin", plugin.Name.ToLower(), buttons, menuItems);
+            var tooldropDownItems = plugin.ToolbarButtons.Select(i => new
+                { Text = i.Text, i.Scope, i.Position, Items = i.Items.Select(j => new ProcessedItem(j)) });
+            await module.InvokeVoidAsync("registerPlugin", plugin.Name.ToLower(), buttons, menuItems, tooldropDownItems);
         }
 
+        private class ProcessedItem
+        {
+            public string Text { get; set; }
+            public IEnumerable<ProcessedItem>? Items { get; set; }
+            public DotNetObjectReference<BlazorPlugin.ToolbarButton.Item> DotNethelper { get; set; }
+
+            public ProcessedItem(BlazorPlugin.ToolbarButton.Item item)
+            {
+                Text = item.Text;
+                Items = item.SubItems?.Select(i=>new ProcessedItem(i));
+                DotNethelper = DotNetObjectReference.Create(item);
+            }
+        }
 
 
         public async ValueTask DisposeAsync()

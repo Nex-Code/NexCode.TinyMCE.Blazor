@@ -21,12 +21,28 @@
         Plugin = new BlazorPlugin()
         {
             Name = "test",
-            Buttons = new List<BlazorPlugin.BaseAction>()
+            /*Buttons = new List<BlazorPlugin.BaseAction>()
             {
                 new BlazorPlugin.BaseAction()
                 {
                     OnAction = TestCall,
                     Text = "Call test"
+                }
+            },*/
+            ToolbarButtons = new List<BlazorPlugin.ToolbarButton>()
+            {
+                new BlazorPlugin.ToolbarButton()
+                {
+                    Text = "Test MenuDrop",
+                    Items = new List<BlazorPlugin.ToolbarButton.Item>()
+                    {
+                        new BlazorPlugin.ToolbarButton.Item(){Text = "Item 1"},
+                        new BlazorPlugin.ToolbarButton.Item(){Text = "Item 2", SubItems = new []
+                        {
+                            new BlazorPlugin.ToolbarButton.Item(){Text = "Subitem 1"},
+                            new BlazorPlugin.ToolbarButton.Item(){Text = "Subitem 2"},
+                        }}
+                    }
                 }
             }
         };
