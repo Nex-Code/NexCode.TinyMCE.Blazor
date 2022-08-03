@@ -2,32 +2,55 @@
 
 
 
-<RichTextEditor DynamicPlugins="@(new []{plugin})" />
+<RichTextEditor DynamicPlugins="@(new[] { Plugin })" @ref="RichTextEditor" Options="Options">
+    <strong>Test</strong>
+</RichTextEditor>
 
 
 @code
 {
 
 
+    private RichTextEditor RichTextEditor { get; set; }
 
-    private BlazorPlugin plugin = new BlazorPlugin()
+    [Inject]
+    private IJSRuntime JsRuntime { get; set; }
+
+    public Index()
     {
-        Name = "Test",
-        Buttons = new List<BlazorPlugin.BaseAction>()
+        Plugin = new BlazorPlugin()
         {
-            new BlazorPlugin.BaseAction()
+            Name = "test",
+            Buttons = new List<BlazorPlugin.BaseAction>()
             {
-                OnAction = TestCall,
-                Text = "Call test"
+                new BlazorPlugin.BaseAction()
+                {
+                    OnAction = TestCall,
+                    Text = "Call test"
+                }
             }
-        }
+        };
+    }
+
+
+    private BlazorPlugin Plugin;
+
+    private RichTextEditorOptions Options = new RichTextEditorOptions()
+    {
+        Plugins = "test",
+        Toolbar = "test"
     };
 
 
-
-    private static void TestCall()
+    private async void TestCall()
     {
+        var module = await JsRuntime.InvokeAsync<IJSObjectReference>(
+            "import", "./js/NewPlugin.js").AsTask();
+
+
+        await module.InvokeVoidAsync("showDialog", RichTextEditor.Id);
 
     }
+    
 
 }
