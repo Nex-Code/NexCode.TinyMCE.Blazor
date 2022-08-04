@@ -12,11 +12,10 @@ namespace NexCode.TinyMCEEditor
             services.AddScoped<EditorJs>();
             services.AddTransient<JsLoader>();
 
-
             services.AddSingleton((b) => new RichTextDefaultEditorOptions()
             {
-                Plugins = "advlist autolink link image lists charmap print preview hr anchor pagebreak searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking table emoticons template paste help",
-                Toolbar = "undo redo | formats | bold italic | alignleft aligncenter alignright alignjustify | outdent indent | table code"
+                Plugins = Defaults.Plugins,
+                Toolbar = Defaults.Toolbar,
             });
 
 
@@ -34,5 +33,14 @@ namespace NexCode.TinyMCEEditor
         }
 
 
+    }
+
+    public class Defaults
+    {
+        public const string Plugins =
+            "advlist autolink link image lists charmap print preview hr anchor pagebreak searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking table emoticons template paste help";
+
+        public const string Toolbar =
+            "undo redo | styles | bold italic | alignleft aligncenter alignright alignjustify | outdent indent";
     }
 }

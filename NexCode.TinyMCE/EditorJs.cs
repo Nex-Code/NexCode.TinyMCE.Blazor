@@ -4,6 +4,7 @@ using Microsoft.JSInterop;
 using NexCode.TinyMCE.Blazor.Plugins;
 using NexCode.TinyMCE.Blazor.Plugins.MenuItem;
 using NexCode.TinyMCE.Blazor.Plugins.Toolbar;
+using System.Xml.Linq;
 
 namespace NexCode.TinyMCEEditor
 {
@@ -21,7 +22,7 @@ namespace NexCode.TinyMCEEditor
                 "import", "./_content/NexCode.TinyMCE.Blazor/editorJs.js").AsTask());
         }
 
-
+        #region boring bits
 
         public async ValueTask Load(bool waitForLoad = false)
         {
@@ -36,13 +37,7 @@ namespace NexCode.TinyMCEEditor
             else
                 JsLoader.Load(url);
         }
-
-        public async ValueTask Destroy(string id)
-        {
-            var module = await _moduleTask.Value;
-            await module.InvokeVoidAsync("destroy", id);
-        }
-
+        
         public async ValueTask Init(string id, string? plugins = null, string? menubar = null, string? toolbar = null, IEnumerable<Plugin>? blazorPlugins = null)
         {
             await Load(true);
@@ -65,106 +60,21 @@ namespace NexCode.TinyMCEEditor
         }
 
 
-        private async ValueTask RegisterPlugin(Plugin plugin)
+        public async ValueTask RegisterPlugin(Plugin plugin)
         {
 
-            var toolbar = plugin.Toolbar.Select(i => ProcessButton(i, plugin.Name));
-            var menuItem = plugin.MenuItems.Select(i => ProcessMenuItem(i, plugin.Name));
+            var toolbar = plugin.Toolbar.Select(i => JsConverter.Process(i, plugin.Name));
+            var menuItem = plugin.MenuItems.Select(i => JsConverter.Process(i, plugin.Name));
             var uiElements = toolbar.Concat(menuItem).ToArray();
 
             var module = await _moduleTask.Value;
             await module.InvokeVoidAsync("registerPlugin", plugin.Name.ToLower(), uiElements);
         }
 
-
-        private Dictionary<string, object?> ProcessButton(BasicToolbarButton action, string pluginName)
+        public async ValueTask RemovePlugin(string name)
         {
-            var dict = BaseProcess(action, pluginName);
-
-            var requiresDotNetHelper = dict.Any(i=>(true == i.Value as bool?) && i.Key.StartsWith("has") );
-
-
-            if (action is SplitToolbarButton splitbutton)
-            {
-
-                dict.Add(nameof(splitbutton.Columns), splitbutton.Columns);
-
-                if (splitbutton.ItemAction != null)
-                {
-                    dict.Add("HasItemAction",true);
-                    requiresDotNetHelper = true;
-                }
-            }
-
-            if (action is SplitToolbarButton || action is MenuToolbarButtonGroup || action is ToggleToolbarButton)
-            {
-                requiresDotNetHelper = true;
-            }
-
-
-
-            if(requiresDotNetHelper)
-                dict.Add("DotNetHelper", DotNetObjectReference.Create(action));
-
-
-            if (action is GroupToolbarButton gTb)
-            {
-                dict.Add(nameof(gTb.Items), gTb.Items);
-            }
-
-
-            return dict;
+            await (await _moduleTask.Value).InvokeVoidAsync("removePlugin", name);
         }
-
-        private Dictionary<string, object?> ProcessMenuItem(BasicMenuItem action, string pluginName)
-        {
-            var dict = BaseProcess(action, pluginName);
-
-            dict.Add(nameof(action.Value),action.Value);
-            dict.Add(nameof(action.Shortcut), action.Shortcut);
-
-
-            var requiresDotNetHelper = dict.Any(i => (true == i.Value as bool?) && i.Key.StartsWith("has"));
-            if (action is NestedMenuItem)
-            {
-                requiresDotNetHelper = true;
-            }
-
-            if (action is ToggleMenuItem ttbutton)
-            {
-                dict.Add(nameof(ttbutton.Active), ttbutton.Active);
-            }
-
-            if (requiresDotNetHelper)
-                dict.Add("DotNetHelper", DotNetObjectReference.Create(action));
-
-            return dict;
-        }
-
-        private Dictionary<string, object?> BaseProcess(BaseAction action, string pluginName)
-        {
-            var dict = new Dictionary<string, object?>();
-            dict.Add(nameof(action.Text), action.Text);
-            dict.Add(nameof(action.Icon), action.Icon);
-            dict.Add(nameof(action.ToolTip), action.ToolTip);
-            dict.Add(nameof(action.Enabled), action.Enabled);
-            dict.Add(nameof(action.Id), action.Id ?? pluginName);
-            dict.Add(nameof(action.FuncName), action.FuncName);
-
-            if (action.Setup != null)
-            {
-                dict.Add("HasSetup", true);
-            }
-
-            if (action.Action != null)
-            {
-                dict.Add("HasAction", true);
-            }
-
-            return dict;
-        }
-
-
 
         public async ValueTask DisposeAsync()
         {
@@ -175,19 +85,72 @@ namespace NexCode.TinyMCEEditor
             }
         }
 
-        public async ValueTask SetContent(string id, string? str)
+        #endregion
+
+        #region Editor
+
+        public async ValueTask<string?> GetContent(string id, object? args = null)
         {
-            await Load(true);
-            var module = await _moduleTask.Value;
-            await module.InvokeVoidAsync("setContent", id, str);
+            var content =  await (await _moduleTask.Value).InvokeAsync<string?>("getContent", id, args);
+            if(!content.IsNullOrWhiteSpace())
+                content = content.Replace("<!--!-->", "").Trim();
+            return content;
         }
 
-        public async ValueTask<string> GetContent(string id)
+        public async ValueTask<string?> GetParam(string id, string name, string defaultValue, string type)
         {
-            await Load(true);
-            var module = await _moduleTask.Value;
-            return await module.InvokeAsync<string>("getContent", id);
+            return await (await _moduleTask.Value).InvokeAsync<string?>("getParam", id, name, defaultValue, type);
         }
+
+        public async ValueTask<bool> HasPlugin(string id, string name, bool loaded = false)
+        {
+            return await (await _moduleTask.Value).InvokeAsync<bool>("hasPlugin", id, name, loaded);
+        }
+
+
+        public async ValueTask Hide(string id)
+        {
+            await (await _moduleTask.Value).InvokeVoidAsync("hide", id);
+        }
+        public async ValueTask<string?> Load(string id)
+        {
+            return await (await _moduleTask.Value).InvokeAsync<string?>("load", id);
+        }
+
+        public async ValueTask Remove(string id)
+        {
+            await (await _moduleTask.Value).InvokeVoidAsync("remove", id);
+        }
+
+        public async ValueTask<string?> Save(string id)
+        {
+            return await (await _moduleTask.Value).InvokeAsync<string?>("save", id);
+        }
+
+        public async ValueTask<string?> SetContent(string id, string? content)
+        {
+            return await (await _moduleTask.Value).InvokeAsync<string?>("setContent", id, content);
+        }
+
+        public async ValueTask<string?> InsertContent(string id, string? content, object? args=null)
+        {
+            return await (await _moduleTask.Value).InvokeAsync<string?>("insertContent", id, content, args);
+        }
+
+        public async ValueTask<bool> SetProgressState(string id, bool state, int? time)
+        {
+            return await (await _moduleTask.Value).InvokeAsync<bool>("setProgressState", id,state, time);
+        }
+        public async ValueTask Show(string id)
+        {
+            await (await _moduleTask.Value).InvokeAsync<string?>("show", id);
+        }
+
+
+        #endregion
+
+
+
 
 
     }

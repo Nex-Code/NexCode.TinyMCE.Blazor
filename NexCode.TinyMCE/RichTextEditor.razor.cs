@@ -59,11 +59,11 @@ namespace NexCode.TinyMCE.Blazor
         {
             if (firstRender && LoadOnRender)
             {
-                await Load();
+                await Init();
             }
         }
 
-        public async Task Load()
+        public async Task Init()
         {
             Toolbar = TrimAndClean(Toolbar);
             Plugins = TrimAndClean(Plugins);
@@ -74,17 +74,7 @@ namespace NexCode.TinyMCE.Blazor
             await Js.Init(Id, Plugins, MenuBar, Toolbar, DynamicPlugins);
         }
 
-        public async Task Destroy()
-        {
-            await Js.Destroy(Id);
-        }
 
-        public async Task Refresh()
-        {
-            await Destroy();
-            StateHasChanged();
-            await Load();
-        }
 
 
         private string? TrimAndClean(string? str)
@@ -98,19 +88,41 @@ namespace NexCode.TinyMCE.Blazor
 
 
 
-        public async ValueTask<string> GetHtml()
+        public async ValueTask<string?> GetContent()
         {
-            var html =  await Js.GetContent(Id);
-            if (html.StartsWith("<!--!-->"))
-                html = html.Replace("<!--!-->", "").Trim();
-
-            return html;
+            return await Js.GetContent(Id);
+            
         }
 
-        public async ValueTask SetHtml(string? html)
+        public async ValueTask SetContent(string? html)
         {
             await Js.SetContent(Id, html);
-            StateHasChanged();
+        }
+
+        public async ValueTask<string?> InsertContent(string content, object? args = null)
+        {
+            return await Js.InsertContent(Id, content, args);
+        }
+
+        public async ValueTask Remove()
+        {
+            await Js.Remove(Id);
+        }
+
+        
+        public async ValueTask Load()
+        {
+            await Js.Load(Id);
+        }
+
+        public async ValueTask<bool> SetProgressState(bool state, int? time = null)
+        {
+            return await Js.SetProgressState(Id, state, time);
+        }
+
+        public async ValueTask<bool> HasPlugin(string name, bool loaded = true)
+        {
+            return await Js.HasPlugin(Id, name, loaded);
         }
 
 

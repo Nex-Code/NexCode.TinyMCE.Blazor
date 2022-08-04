@@ -22,9 +22,9 @@ namespace NexCode.TinyMCE.Blazor.Plugins.Toolbar
         public IEnumerable<MenuToolbarButtonBase> Items { get; set; } = Array.Empty<MenuToolbarButtonBase>();
 
         [JSInvokable]
-        public async ValueTask<IEnumerable<MenuToolbarButtonBase>> Fetch()
+        public virtual async ValueTask<IEnumerable<object>> Fetch()
         {
-            return Items;
+            return Items.Process(true);
         }
 
     }
