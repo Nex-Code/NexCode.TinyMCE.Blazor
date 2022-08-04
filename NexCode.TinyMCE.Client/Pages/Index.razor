@@ -1,4 +1,7 @@
 ﻿@page "/"
+@using NexCode.TinyMCE.Blazor.Plugins
+@using NexCode.TinyMCE.Blazor.Plugins.MenuItem
+@using NexCode.TinyMCE.Blazor.Plugins.Toolbar
 
 
 
@@ -18,43 +21,34 @@
 
     public Index()
     {
-        Plugin = new BlazorPlugin()
+        Plugin = new Plugin()
         {
-            Name = "test",
-            /*Buttons = new List<BlazorPlugin.BaseAction>()
+            Name = "custom",
+          
+            /*Toolbar = new []
             {
-                new BlazorPlugin.BaseAction()
+                new GroupToolbarButton(){Text = "Test", Items = new []
                 {
-                    OnAction = TestCall,
-                    Text = "Call test"
-                }
+                    new LabelledToolbarButton(){Name = "alignment", Items = "alignleft aligncenter alignright | alignjustify".Split(" ")},
+                }}
             },*/
-            ToolbarButtons = new List<BlazorPlugin.ToolbarButton>()
+            MenuItems = new []
             {
-                new BlazorPlugin.ToolbarButton()
-                {
-                    Text = "Test MenuDrop",
-                    Items = new List<BlazorPlugin.ToolbarButton.Item>()
-                    {
-                        new BlazorPlugin.ToolbarButton.Item(){Text = "Item 1"},
-                        new BlazorPlugin.ToolbarButton.Item(){Text = "Item 2", SubItems = new []
-                        {
-                            new BlazorPlugin.ToolbarButton.Item(){Text = "Subitem 1"},
-                            new BlazorPlugin.ToolbarButton.Item(){Text = "Subitem 2"},
-                        }}
-                    }
-                }
+                new BasicMenuItem(){Text = "Test Menu", Id = "basicitem"}
             }
+            
         };
     }
 
 
-    private BlazorPlugin Plugin;
+    private Plugin Plugin;
 
     private RichTextEditorOptions Options = new RichTextEditorOptions()
     {
-        Plugins = "test",
-        Toolbar = "test"
+            Plugins = "custom",
+            //Toolbar = "test format",
+            MenuBar = "custom"
+    
     };
 
 

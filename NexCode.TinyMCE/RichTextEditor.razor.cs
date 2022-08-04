@@ -7,6 +7,7 @@ using NexCode.TinyMCEEditor;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.Extensions.DependencyInjection;
+using NexCode.TinyMCE.Blazor.Plugins;
 
 namespace NexCode.TinyMCE.Blazor
 {
@@ -44,7 +45,7 @@ namespace NexCode.TinyMCE.Blazor
         [Parameter]
         public RenderFragment? ChildContent { get; set; }
 
-        [Parameter] public IEnumerable<BlazorPlugin> DynamicPlugins { get; set; } = Array.Empty<BlazorPlugin>();
+        [Parameter] public IEnumerable<Plugin> DynamicPlugins { get; set; } = Array.Empty<Plugin>();
 
 
         [Parameter] public bool LoadOnRender { get; set; } = true;
@@ -81,6 +82,7 @@ namespace NexCode.TinyMCE.Blazor
         public async Task Refresh()
         {
             await Destroy();
+            StateHasChanged();
             await Load();
         }
 

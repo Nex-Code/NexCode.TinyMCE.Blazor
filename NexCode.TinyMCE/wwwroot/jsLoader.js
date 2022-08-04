@@ -1,4 +1,4 @@
-export function LoadJs(url, dotNethelper, method) {
+export function loadJs(url, dotNethelper, method) {
 
     if (document.querySelectorAll("[src='" + url + "']").length != 0) {
         return;

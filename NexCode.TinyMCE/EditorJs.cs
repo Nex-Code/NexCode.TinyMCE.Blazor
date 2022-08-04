@@ -1,6 +1,9 @@
 ﻿using System.Runtime.InteropServices;
 using NexCode.TinyMCE.Blazor;
 using Microsoft.JSInterop;
+using NexCode.TinyMCE.Blazor.Plugins;
+using NexCode.TinyMCE.Blazor.Plugins.MenuItem;
+using NexCode.TinyMCE.Blazor.Plugins.Toolbar;
 
 namespace NexCode.TinyMCEEditor
 {
@@ -10,14 +13,12 @@ namespace NexCode.TinyMCEEditor
         private readonly Lazy<Task<IJSObjectReference>> _moduleTask;
         private JsLoader JsLoader { get; }
 
-        private IEnumerable<JsPlugin> Plugins { get; }
 
-        public EditorJs(IJSRuntime jsRuntime, JsLoader jsLoader, IEnumerable<JsPlugin> plugins)
+        public EditorJs(IJSRuntime jsRuntime, JsLoader jsLoader)
         {
             JsLoader = jsLoader;
             _moduleTask = new(() => jsRuntime.InvokeAsync<IJSObjectReference>(
                 "import", "./_content/NexCode.TinyMCE.Blazor/editorJs.js").AsTask());
-            Plugins = plugins;
         }
 
 
@@ -42,28 +43,13 @@ namespace NexCode.TinyMCEEditor
             await module.InvokeVoidAsync("destroy", id);
         }
 
-        public async ValueTask Init(string id, string? plugins = null, string? menubar = null, string? toolbar = null, IEnumerable<BlazorPlugin>? blazorPlugins = null)
+        public async ValueTask Init(string id, string? plugins = null, string? menubar = null, string? toolbar = null, IEnumerable<Plugin>? blazorPlugins = null)
         {
             await Load(true);
 
 
             var externalPlugins = new Dictionary<string,string>();
-            if (!plugins.IsNullOrWhiteSpace())
-            {
-                var pList = plugins.Split(" ").ToHashSet();
-
-                foreach (var plugin in Plugins)
-                {
-                    if (pList.Contains(plugin.Name))
-                    {
-                        pList.Remove(plugin.Name);
-                        externalPlugins.Add(plugin.Name, plugin.JsUrl);
-                    }
-                }
-
-                plugins = string.Join(" ", pList);
-
-            }
+           
 
             if (blazorPlugins?.Any() ?? false)
             {
@@ -79,30 +65,105 @@ namespace NexCode.TinyMCEEditor
         }
 
 
-        private async ValueTask RegisterPlugin(BlazorPlugin plugin)
+        private async ValueTask RegisterPlugin(Plugin plugin)
         {
+
+            var toolbar = plugin.Toolbar.Select(i => ProcessButton(i, plugin.Name));
+            var menuItem = plugin.MenuItems.Select(i => ProcessMenuItem(i, plugin.Name));
+            var uiElements = toolbar.Concat(menuItem).ToArray();
+
             var module = await _moduleTask.Value;
-
-            var buttons = plugin.Buttons.Select(i=>new {i.Text, dotNethelper = DotNetObjectReference.Create(i), });
-            var menuItems = plugin.MenuItems.Select(i => new { i.Text, dotNethelper = DotNetObjectReference.Create(i) });
-            var tooldropDownItems = plugin.ToolbarButtons.Select(i => new
-                { Text = i.Text, i.Scope, i.Position, Items = i.Items.Select(j => new ProcessedItem(j)) });
-            await module.InvokeVoidAsync("registerPlugin", plugin.Name.ToLower(), buttons, menuItems, tooldropDownItems);
+            await module.InvokeVoidAsync("registerPlugin", plugin.Name.ToLower(), uiElements);
         }
 
-        private class ProcessedItem
+
+        private Dictionary<string, object?> ProcessButton(BasicToolbarButton action, string pluginName)
         {
-            public string Text { get; set; }
-            public IEnumerable<ProcessedItem>? Items { get; set; }
-            public DotNetObjectReference<BlazorPlugin.ToolbarButton.Item> DotNethelper { get; set; }
+            var dict = BaseProcess(action, pluginName);
 
-            public ProcessedItem(BlazorPlugin.ToolbarButton.Item item)
+            var requiresDotNetHelper = dict.Any(i=>(true == i.Value as bool?) && i.Key.StartsWith("has") );
+
+
+            if (action is SplitToolbarButton splitbutton)
             {
-                Text = item.Text;
-                Items = item.SubItems?.Select(i=>new ProcessedItem(i));
-                DotNethelper = DotNetObjectReference.Create(item);
+
+                dict.Add(nameof(splitbutton.Columns), splitbutton.Columns);
+
+                if (splitbutton.ItemAction != null)
+                {
+                    dict.Add("HasItemAction",true);
+                    requiresDotNetHelper = true;
+                }
             }
+
+            if (action is SplitToolbarButton || action is MenuToolbarButtonGroup || action is ToggleToolbarButton)
+            {
+                requiresDotNetHelper = true;
+            }
+
+
+
+            if(requiresDotNetHelper)
+                dict.Add("DotNetHelper", DotNetObjectReference.Create(action));
+
+
+            if (action is GroupToolbarButton gTb)
+            {
+                dict.Add(nameof(gTb.Items), gTb.Items);
+            }
+
+
+            return dict;
         }
+
+        private Dictionary<string, object?> ProcessMenuItem(BasicMenuItem action, string pluginName)
+        {
+            var dict = BaseProcess(action, pluginName);
+
+            dict.Add(nameof(action.Value),action.Value);
+            dict.Add(nameof(action.Shortcut), action.Shortcut);
+
+
+            var requiresDotNetHelper = dict.Any(i => (true == i.Value as bool?) && i.Key.StartsWith("has"));
+            if (action is NestedMenuItem)
+            {
+                requiresDotNetHelper = true;
+            }
+
+            if (action is ToggleMenuItem ttbutton)
+            {
+                dict.Add(nameof(ttbutton.Active), ttbutton.Active);
+            }
+
+            if (requiresDotNetHelper)
+                dict.Add("DotNetHelper", DotNetObjectReference.Create(action));
+
+            return dict;
+        }
+
+        private Dictionary<string, object?> BaseProcess(BaseAction action, string pluginName)
+        {
+            var dict = new Dictionary<string, object?>();
+            dict.Add(nameof(action.Text), action.Text);
+            dict.Add(nameof(action.Icon), action.Icon);
+            dict.Add(nameof(action.ToolTip), action.ToolTip);
+            dict.Add(nameof(action.Enabled), action.Enabled);
+            dict.Add(nameof(action.Id), action.Id ?? pluginName);
+            dict.Add(nameof(action.FuncName), action.FuncName);
+
+            if (action.Setup != null)
+            {
+                dict.Add("HasSetup", true);
+            }
+
+            if (action.Action != null)
+            {
+                dict.Add("HasAction", true);
+            }
+
+            return dict;
+        }
+
 
 
         public async ValueTask DisposeAsync()

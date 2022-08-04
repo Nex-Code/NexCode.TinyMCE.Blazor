@@ -1,43 +1,7 @@
 // This is a JavaScript module that is loaded on demand. It can export any number of
 // functions, and may import other JavaScript modules if required.
 
-export function showPrompt(message) {
-    return prompt(message, 'Type anything here');
-}
 
-
-export function LoadJs(url, dotNethelper, method) {
-
-    if (document.querySelectorAll("[src='" + url + "']").length != 0) {
-        return;
-    }
-
-    var script = document.createElement("script");
-    script.setAttribute("src", url);
-    script.onload = function () {
-        return dotNethelper.invokeMethodAsync(method);
-    }
-
-    document.body.appendChild(script);
-
-}
-
-
-
-
-export function init(id, plugins, menubar, toolbar, external_plugins) {
-    tinymce.init({
-        selector: "#" + id,
-        plugins: plugins,
-        toolbar: toolbar,
-        menubar: menubar,
-        external_plugins: external_plugins,
-        setup:(editor) => {
-            
-
-        }
-    });
-}
 
 export function setContent(id, content) {
     var editor = tinymce.get(id);
@@ -58,7 +22,26 @@ export function getContent(id) {
 }
 
 
-export function registerPlugin(id, buttons, menuItems, toolbarButtons) {
+export function init(id, plugins, menubar, toolbar, external_plugins) {
+    tinymce.init({
+        selector: "#" + id,
+        plugins: plugins,
+        toolbar: toolbar,
+        
+        menu: {
+            custom: { title: 'Custom Menu', items: 'basicitem' }
+        },
+        menubar: 'file edit custom',
+        external_plugins: external_plugins,
+        setup:(editor) => {
+            
+
+        }
+    });
+}
+
+
+export function registerPlugin(id, buttons) {
 
     if (tinymce.PluginManager.lookup[id] != null) {
         tinymce.PluginManager.remove(id);
@@ -68,57 +51,55 @@ export function registerPlugin(id, buttons, menuItems, toolbarButtons) {
     tinymce.PluginManager.add(id,
         function(editor, url) {
 
-            toolbarButtons.forEach(function(b) {
+            buttons.forEach(function(b) {
 
-                editor.ui.registry.addMenuButton(id, {
-                    text: b.text,
-                    fetch: (callback) => {
-                        const items = b.items.map((item) => buildMenuItems(item));
-                        callback(items);
-                    }
-                });
-            })
+                var item = {
+                    text: b.Text,
+                    icon: b.Icon,
+                    tooltip: b.Tooltip,
+                    enabled: b.Enabled,
+                }
 
-            buttons.forEach(function(b)
-            {
-                editor.ui.registry.addButton(id, {
-                    text: b.text,
-                    onAction: function () {
-                        return b.dotNethelper.invokeMethodAsync("TriggerAction");
-                    }
-                });
+                if (b.HasSetup)
+                    item.onSetup = () => b.DotNetHelper.invokeMethodAsync("OnSetup");
+
+                if (b.HasAction)
+                    item.onAction = () => b.DotNetHelper.invokeMethodAsync("OnAction");
+                else
+                    item.onAction = () => {};
+
+
+
+                switch (b.FuncName) {
+                case "addToggleButton":
+                case "addToggleMenuItem":
+                    item.active = b.Active;
+                    break;
+                case "addSplitButton":
+                    if (b.HasItemAction)
+                        item.onItemAction = (api, value) => b.DotNetHelper.invokeMethodAsync("OnItemAction", value);
+                    else
+                            item.onItemAction = () => { };
+
+                case "addMenuButton":
+                
+                case "addNestedMenuItem":
+                    item.fetch = (callback) => {
+                        b.DotNetHelper.invokeMethodAsync("Fetch").then((items) => {
+                            callback(items.result);
+                        })
+                    };
+                        break;
+
+                    case "addGroupToolbarButton":
+                        item.items = b.Items;
+                        break;
+                };
+
+                editor.ui.registry[b.FuncName](b.Id, item);
             });
-
-            menuItems.forEach(function (b) {
-                editor.ui.registry.addMenuItem(id, {
-                    text: b.text,
-                    onAction: function () {
-                        return b.dotNethelper.invokeMethodAsync("TriggerAction");
-                    }
-                });
-            });
+            
         });
-}
-
-
-function buildMenuItems(menuItem) {
-
-    if (menuItem.items != null) {
-
-        return {
-            text: menuItem.text,
-            type: 'nestedmenuitem',
-            getSubmenuItems: () => menuItem.items.map((item) => buildMenuItems(item))
-        };
-
-    }
-
-    return {
-        type: 'menuitem',
-        text: menuItem.text,
-        onAction: () => menuItem.dotNethelper.invokeMethodAsync("TriggerAction")
-    }
-
 }
 
 

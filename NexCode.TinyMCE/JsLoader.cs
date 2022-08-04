@@ -59,7 +59,7 @@ namespace NexCode.TinyMCE.Blazor
             {
                 var module = await _moduleTask.Value;
                 var dotNetHelper = DotNetObjectReference.Create(this);
-                await module.InvokeVoidAsync("LoadJs", url, dotNetHelper, nameof(LoadComplete));
+                await module.InvokeVoidAsync("loadJs", url, dotNetHelper, nameof(LoadComplete));
             }
             catch (Exception ex)
             {
