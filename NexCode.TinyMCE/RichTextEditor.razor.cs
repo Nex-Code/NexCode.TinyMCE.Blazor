@@ -71,7 +71,7 @@ namespace NexCode.TinyMCE.Blazor
 
             DynamicPlugins = DynamicPlugins.Where(i => i != null).ToArray();
 
-            await Js.Init(Id, Plugins, MenuBar, Toolbar, DynamicPlugins);
+            await Js.Init(Id, Plugins, MenuBar, Toolbar, DynamicPlugins, Options?.Branding);
         }
 
 
@@ -96,6 +96,8 @@ namespace NexCode.TinyMCE.Blazor
 
         public async ValueTask SetContent(string? html)
         {
+            html ??= string.Empty;
+
             await Js.SetContent(Id, html);
         }
 

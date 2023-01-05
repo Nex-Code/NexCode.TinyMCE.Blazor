@@ -17,6 +17,7 @@ namespace NexCode.TinyMCE.Blazor
         public string? Toolbar { get; set; }
         public string? Plugins { get; set; }
         public string? MenuBar { get; set; }
+        public bool? Branding { get; set; }
     }
 
 }

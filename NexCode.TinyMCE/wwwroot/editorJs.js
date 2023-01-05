@@ -4,12 +4,14 @@
 
 
 
-export function init(id, plugins, menubar, toolbar) {
+export function init(id, plugins, menubar, toolbar, branding) {
+
     tinymce.init({
         selector: "#" + id,
         plugins: plugins,
         toolbar: toolbar,
         menubar: menubar,
+        branding: branding
     });
 }
 
@@ -136,6 +138,10 @@ export function remove(id) {
     GetEditorAndExecute(id, (editor) => editor.remove());
 }
 export function save(id) {
+
+    if (!content)
+        content = "";
+
     return GetEditorAndExecute(id, (editor) => editor.save());
 }
 export function setContent(id, content, args) {

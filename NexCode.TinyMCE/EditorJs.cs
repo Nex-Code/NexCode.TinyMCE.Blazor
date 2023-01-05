@@ -38,7 +38,7 @@ namespace NexCode.TinyMCEEditor
                 JsLoader.Load(url);
         }
         
-        public async ValueTask Init(string id, string? plugins = null, string? menubar = null, string? toolbar = null, IEnumerable<Plugin>? blazorPlugins = null)
+        public async ValueTask Init(string id, string? plugins = null, string? menubar = null, string? toolbar = null, IEnumerable<Plugin>? blazorPlugins = null, bool? branding=null)
         {
             await Load(true);
 
