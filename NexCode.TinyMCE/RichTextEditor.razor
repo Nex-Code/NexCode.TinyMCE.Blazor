@@ -1,9 +1,12 @@
-﻿
-<div id="@Id">
-    
-    @if (ChildContent != null)
+
+<CascadingValue TValue="RichTextEditor" Value="this" IsFixed="true" >
+    @if (Plugins != null)
     {
-        @ChildContent
+        @Plugins
     }
 
-</div>
+    <div id="@Id">
+        @Html
+    </div>
+
+</CascadingValue>

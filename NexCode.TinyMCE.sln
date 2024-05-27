@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31605.320
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NexCode.TinyMCE.Blazor", "NexCode.TinyMCE\NexCode.TinyMCE.Blazor.csproj", "{CFDCA3F4-75C7-43B9-AD4F-22B6AF3EEECF}"
 EndProject

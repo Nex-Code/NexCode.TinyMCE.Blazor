@@ -1,12 +1,16 @@
 ﻿@page "/"
-@using NexCode.TinyMCE.Blazor.Plugins
-@using NexCode.TinyMCE.Blazor.Plugins.MenuItem
-@using NexCode.TinyMCE.Blazor.Plugins.Toolbar
 
+Rich text goes below:
 
-
-<RichTextEditor DynamicPlugins="@(new[] { Plugin })" @ref="RichTextEditor" >
-    <strong>Test</strong>
+<RichTextEditor>
+    <Plugins>
+        <DefaultPlugins/>
+        <CustomPlugin Name="test">
+            <ToggleButton Text="A test button"/>
+            <Seperator/>
+            <ToggleButton Text="A test button Another"/>
+        </CustomPlugin>
+    </Plugins>
 </RichTextEditor>
 
 
@@ -14,65 +18,5 @@
 {
 
 
-    private RichTextEditor RichTextEditor { get; set; }
-
-    [Inject]
-    private IJSRuntime JsRuntime { get; set; }
-
-    public Index()
-    {
-        Plugin = new Plugin()
-        {
-            Name = "custom",
-          
-            Toolbar = new []
-            {
-                new MenuToolbarButtonGroup(){Text = "Test", 
-                        Items = new MenuToolbarButtonBase []
-                        {
-                            new MenuToolbarButtonItem(){Text = "MenuItem1"},
-                            new MenuToolbarButtonItem(){Text = "MenuItem2"},
-                            new MenuToolbarButtonGroup()
-                            {
-                                Text = "MenuItem3",
-                                Items = new []
-                                {
-                                    new MenuToolbarButtonItem(){Text = "Sub MenuItem1"},
-                                }
-
-                            }
-                        }
-                }
-            },
-            /*MenuItems = new []
-            {
-                new BasicMenuItem(){Text = "Test Menu", Id = "basicitem"}
-            }*/
-            
-        };
-    }
-
-
-    private Plugin Plugin;
-
-    private RichTextEditorOptions Options = new RichTextEditorOptions()
-    {
-            Plugins = "custom",
-            Toolbar = "custom",
-            MenuBar = "custom"
-    
-    };
-
-
-    private async void TestCall()
-    {
-        var module = await JsRuntime.InvokeAsync<IJSObjectReference>(
-            "import", "./js/NewPlugin.js").AsTask();
-
-
-        await module.InvokeVoidAsync("showDialog", RichTextEditor.Id);
-
-    }
-    
 
 }

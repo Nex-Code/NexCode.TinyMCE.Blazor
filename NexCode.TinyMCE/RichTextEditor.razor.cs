@@ -3,61 +3,37 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using NexCode.TinyMCEEditor;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Rendering;
-using Microsoft.Extensions.DependencyInjection;
-using NexCode.TinyMCE.Blazor.Plugins;
+using Microsoft.Extensions.Options;
+using NexCode.TinyMCE.Blazor.Code;
 
 namespace NexCode.TinyMCE.Blazor
 {
     public partial class RichTextEditor : ComponentBase
     {
-        public string Id { get; } = "editor_"+ Guid.NewGuid().ToString().Replace("-","");
 
-        [Inject] private EditorJs Js { get; set; } = default!;
 
-        [Parameter] 
-        public RichTextEditorOptions Options { get; set; } = new();
+        public string Id { get; } = "editor_"+ Guid.NewGuid().ToString().Replace("-", "");
 
-        [Inject]
-        private RichTextDefaultEditorOptions? DefaultOptions { get; set; }
 
-        [Parameter]
-        public string? Toolbar
-        {
-            get => Options.Toolbar ?? DefaultOptions?.Toolbar;
-            set => Options.Toolbar = value;
-        }
-        [Parameter]
-        public string? Plugins
-        {
-            get => Options.Plugins ?? DefaultOptions?.Plugins;
-            set => Options.Plugins = value;
-        }
-        [Parameter]
-        public string? MenuBar
-        {
-            get => Options.MenuBar ?? DefaultOptions?.MenuBar;
-            set => Options.MenuBar = value;
-        }
+
+        [Parameter] public string Html { get; set; } = string.Empty;
+        [Parameter] public EventCallback<string> HtmlChanged { get; set; }
+
+        [Parameter] public bool DisableLoadOnRender { get; set; }
+        [Parameter] public bool ContextMenuNeverUseNative { get; set; }
 
         [Parameter]
-        public RenderFragment? ChildContent { get; set; }
-
-        [Parameter] public IEnumerable<Plugin> DynamicPlugins { get; set; } = Array.Empty<Plugin>();
+        public RenderFragment? Plugins { get; set; }
 
 
-        [Parameter] public bool LoadOnRender { get; set; } = true;
+        [Inject] private TinyEditor TinyEditor { get; set; } = default!;
 
-        protected override async Task OnInitializedAsync()
-        {
-            await Js.Load();
-        }
+        private bool _loaded;
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if (firstRender && LoadOnRender)
+            if (firstRender && !DisableLoadOnRender)
             {
                 await Init();
             }
@@ -65,68 +41,23 @@ namespace NexCode.TinyMCE.Blazor
 
         public async Task Init()
         {
-            Toolbar = TrimAndClean(Toolbar);
-            Plugins = TrimAndClean(Plugins);
-            MenuBar = TrimAndClean(MenuBar);
+            if (_loaded)
+                return;
+            _loaded = true;
 
-            DynamicPlugins = DynamicPlugins.Where(i => i != null).ToArray();
-
-            await Js.Init(Id, Plugins, MenuBar, Toolbar, DynamicPlugins, Options?.Branding);
+            await TinyEditor.Init(Id, PluginList);
         }
 
 
 
+        private List<Plugin> PluginList { get; } = new List<Plugin>();
 
-        private string? TrimAndClean(string? str)
+        internal void Register(Plugin plugin)
         {
-            if (str.IsNullOrWhiteSpace())
-                return null;
+            if (PluginList.Any(i => i.Name.Equals(plugin.Name, StringComparison.InvariantCultureIgnoreCase)))
+                throw new ArgumentException($"Plugin with name ({plugin.Name}) already exists", nameof(plugin));
 
-            return str.Trim();
+            PluginList.Add(plugin);
         }
-
-
-
-
-        public async ValueTask<string?> GetContent()
-        {
-            return await Js.GetContent(Id);
-            
-        }
-
-        public async ValueTask SetContent(string? html)
-        {
-            html ??= string.Empty;
-
-            await Js.SetContent(Id, html);
-        }
-
-        public async ValueTask<string?> InsertContent(string content, object? args = null)
-        {
-            return await Js.InsertContent(Id, content, args);
-        }
-
-        public async ValueTask Remove()
-        {
-            await Js.Remove(Id);
-        }
-
-        
-        public async ValueTask Load()
-        {
-            await Js.Load(Id);
-        }
-
-        public async ValueTask<bool> SetProgressState(bool state, int? time = null)
-        {
-            return await Js.SetProgressState(Id, state, time);
-        }
-
-        public async ValueTask<bool> HasPlugin(string name, bool loaded = true)
-        {
-            return await Js.HasPlugin(Id, name, loaded);
-        }
-
-
     }
 }
