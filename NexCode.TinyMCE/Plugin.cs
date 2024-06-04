@@ -28,7 +28,7 @@ namespace NexCode.TinyMCE.Blazor
         private RichTextEditor? Parent { get; set; }
 
 
-        public Action<IDictionary<string,object>>? OnEditorLoad { get; init; }
+        public Action<IDictionary<string,object>>? AdditionalConfig { get; init; }
 
 
         protected override void OnInitialized()
@@ -72,7 +72,7 @@ namespace NexCode.TinyMCE.Blazor
 
         public DefaultPlugins() : base()
         {
-            OnEditorLoad = AddDefaultMenu;
+            AdditionalConfig = AddDefaultMenu;
         }
 
         private void AddDefaultMenu(IDictionary<string, object> obj)

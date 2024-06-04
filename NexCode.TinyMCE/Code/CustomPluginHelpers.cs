@@ -41,7 +41,8 @@ public static class CustomPluginHelpers
             (
                 i.RegistrationFunctionName()!,
                 i,
-                DotNetObjectReference.Create(i))
+                DotNetObjectReference.Create(i)
+            )
         ).ToArray();
 
         return items;

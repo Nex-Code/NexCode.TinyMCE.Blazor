@@ -1,16 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
 namespace NexCode.TinyMCE.Blazor.Code
 {
-    public class TinyEditor : JsInteropBase
+
+
+
+    public class TinyEditorIntaliser : JsInteropBase
     {
-        public TinyEditor(IJSRuntime jsRuntime) : base(jsRuntime)
+        public TinyEditorIntaliser(IJSRuntime jsRuntime) : base(jsRuntime)
         {
         }
 
@@ -26,7 +31,7 @@ namespace NexCode.TinyMCE.Blazor.Code
         }
 
 
-        public async ValueTask Init(string selector, IEnumerable<Plugin> plugins)
+        public async ValueTask Init(string selector, IEnumerable<Plugin> plugins, Action? afterLoad =null)
         {
             var plugs = new List<string>();
             var toolbar = new List<string>();
@@ -50,16 +55,16 @@ namespace NexCode.TinyMCE.Blazor.Code
                 contextForms.AddIf(plugin.ContextForms, s => s.IsNotNullOrWhiteSpace());
                
 
-                if (plugin.OnEditorLoad != null)
-                    plugin.OnEditorLoad(options);
+                if (plugin.AdditionalConfig != null)
+                    plugin.AdditionalConfig(options);
 
 
                 menu.AddIf(plugin.Menubar, s => s.IsNotNullOrWhiteSpace());
 
                 if (plugin is CustomPlugin custom)
                 {
-                    await  RegisterPlugin(custom);
-                    //pluginRegisters.Add(vt);
+                    var vt = RegisterPlugin(custom);
+                    pluginRegisters.Add(vt);
                 }
             }
 
@@ -81,6 +86,9 @@ namespace NexCode.TinyMCE.Blazor.Code
             }
 
             await InvokeVoidAsync("init", options);
+
+            if(afterLoad!=null)
+                afterLoad.Invoke();
         }
 
         public async ValueTask RegisterPlugin(CustomPlugin plugin)
@@ -93,5 +101,53 @@ namespace NexCode.TinyMCE.Blazor.Code
 
     }
 
+    public class TinyEditor
+    {
+
+        #region Intalisation and JS calling
+
+        [CascadingParameter]
+        private IEditorScope? EditorScope { get; set; }
+
+
+        public TinyEditor(IJSRuntime js)
+        {
+            Js = js;
+        }
+
+
+        private IJSRuntime Js { get; }
+
+
+
+        private string Editor
+        {
+            get
+            {
+                if (EditorScope == null || !EditorScope.Intalised)
+                    return "tinymce.activeEditor";
+
+                return $"tinymce.EditorManager.get(\"{EditorScope.EditorId}\")";
+            }
+        }
+
+
+        protected virtual async ValueTask<T> InvokeAsync<T>(string funcName, params object?[]? args)
+        {
+            var result = await Js.InvokeAsync<T>($"{Editor}.{funcName}", args);
+            return result;
+        }
+
+        protected virtual async ValueTask InvokeVoidAsync(string funcName, params object?[]? args)
+        {
+            await Js.InvokeVoidAsync($"{Editor}.{funcName}", args);
+        }
+
+        #endregion
+
+
+
+
+    }
 
 }

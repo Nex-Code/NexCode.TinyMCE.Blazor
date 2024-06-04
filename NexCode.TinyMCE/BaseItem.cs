@@ -53,6 +53,14 @@ namespace NexCode.TinyMCE.Blazor
         public EventCallback<MenuApi> OnAction { get; set; }
 
 
+
+        public bool HasSetup => OnSetup.HasDelegate;
+        public bool HasTeardown => OnTeardown.HasDelegate;
+        public bool HasAction => OnAction.HasDelegate;
+
+
+
+
         [Parameter]
         [JsonIgnore]
         public bool Show { get; set; } = true;
@@ -83,7 +91,10 @@ namespace NexCode.TinyMCE.Blazor
 
         [CascadingParameter]
         [JsonIgnore]
-        private CustomPlugin? Parent { get; set; }
+        protected CustomPlugin? Parent { get; set; }
+
+        [Inject] protected TinyEditor Editor { get; set; } = default!;
+
 
         protected override void OnInitialized()
         {

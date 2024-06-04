@@ -71,11 +71,24 @@ export function addItem(editor, funcName, details, dotnetHelper) {
         case "addGroupToolbarButton":
         case "addSplitButton":
             {
-                details.onSetup = (api) => {
-                    CallMenuApiFunc(api, "OnSetupCall");
-                    return (api) => CallMenuApiFunc(api, "OnTeardownCall");
+
+                if (details.hasSetup) {
+                    details.onSetup = (api) => {
+                        CallMenuApiFunc(api, "OnSetupCall");
+
+                        if (detail.hasTeardown) {
+                            return (api) => CallMenuApiFunc(api, "OnTeardownCall");
+                        }
+                    }
+                } else {
+                    details.onSetup = () => { };
                 }
-                details.onAction = (api) => CallMenuApiFunc(api, "OnActionCall");
+
+                if (details.hasAction) {
+                    details.onAction = (api) => CallMenuApiFunc(api, "OnActionCall");
+                } else {
+                    details.onAction = () => { };
+                }
             }
     };
 
