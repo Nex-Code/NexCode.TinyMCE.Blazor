@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,7 +32,42 @@ namespace NexCode.TinyMCE.Blazor.Code
         }
 
 
-        public async ValueTask Init(string selector, IEnumerable<Plugin> plugins, Action? afterLoad =null)
+        public async ValueTask Init(string selector, IEnumerable<Plugin> plugins, Action? afterLoad = null,
+            Action<EditorOptions>? onInitalise = null)
+        {
+            await Init(selector, plugins, afterLoad, objects => CallOnIntalise(onInitalise, objects));
+            return;
+                
+            Task CallOnIntalise(Action<EditorOptions>? func, EditorOptions objects)
+            {
+                if (func != null)
+                    func(objects);
+
+                return Task.CompletedTask;
+            }
+            
+        }
+
+
+        public async ValueTask Init(IEditorScope editor, IEnumerable<Plugin> plugins, Action<TinyEditor>? afterLoad = null,
+            Func<EditorOptions, Task>? onInitalise = null)
+        {
+
+            var orgAfterLoad = afterLoad;
+
+            await Init(editor.EditorId, plugins, NewAfterLoad, onInitalise);
+
+            void NewAfterLoad()
+            {
+                var tinyEditor = new TinyEditor(JsRuntime, editor);
+                if (orgAfterLoad != null) orgAfterLoad.Invoke(tinyEditor);
+            }
+
+
+        }
+
+
+        public async ValueTask Init(string selector, IEnumerable<Plugin> plugins, Action? afterLoad =null, Func<EditorOptions, Task>? onInitalise = null)
         {
             var plugs = new List<string>();
             var toolbar = new List<string>();
@@ -40,10 +76,10 @@ namespace NexCode.TinyMCE.Blazor.Code
             var contextMenu = new List<string>();
             var contextForms = new List<string>();
 
-            var options = new Dictionary<string, object>();
+            var options = new EditorOptions();
             var pluginRegisters = new List<ValueTask>();
 
-            options.Add("selector","#"+selector);
+            options.Selector = "#"+selector;
 
             foreach (var plugin in plugins)
             {
@@ -71,19 +107,23 @@ namespace NexCode.TinyMCE.Blazor.Code
             await pluginRegisters.WhenAll();
 
             if(plugs.Any())
-                options.Add("plugins", string.Join(" ",plugs));
+                options.Plugins = string.Join(" ",plugs);
             if (toolbar.Any())
-                options.Add("toolbar", string.Join(" ", toolbar));
+                options.Plugins = string.Join(" ", toolbar);
             if (menu.Any())
-                options.Add("menubar", string.Join(" ", menu));
+                options.Menubar = string.Join(" ", menu);
             if (contextMenu.Any())
-                options.Add("contextmenu", string.Join(" ", contextMenu));
+                options.Contextmenu = string.Join(" ", contextMenu);
 
             if (options.Remove("menu", out object menuItems))
             {
                 var items = (IEnumerable<Menu>)menuItems;
                 options.Add("menu", items.ToDictionary(i=>i.Title));
             }
+
+
+            if(onInitalise!=null)
+                await onInitalise.Invoke(options);
 
             await InvokeVoidAsync("init", options);
 
@@ -110,37 +150,44 @@ namespace NexCode.TinyMCE.Blazor.Code
         private IEditorScope? EditorScope { get; set; }
 
 
-        public TinyEditor(IJSRuntime js)
+        public TinyEditor(IJSRuntime js) : this(js, null)
         {
-            Js = js;
         }
 
+        public TinyEditor(IJSRuntime js, IEditorScope? scope)
+        {
+            Js = js;
+            EditorScope = scope;
+        }
+
+
+        public async ValueTask<string?> GetContent()
+        {
+            var r = await InvokeAsync<string>("getContent");
+            return r;
+        }
 
         private IJSRuntime Js { get; }
 
-
-
-        private string Editor
+        private async ValueTask<IJSObjectReference> GetEditor()
         {
-            get
-            {
-                if (EditorScope == null || !EditorScope.Intalised)
-                    return "tinymce.activeEditor";
+            if (EditorScope == null || !EditorScope.Intalised)
+                return await Js.InvokeAsync<IJSObjectReference>("tinymce.activeEditor");
 
-                return $"tinymce.EditorManager.get(\"{EditorScope.EditorId}\")";
-            }
+            return await Js.InvokeAsync<IJSObjectReference>("tinymce.EditorManager.get", EditorScope.EditorId);
         }
-
 
         protected virtual async ValueTask<T> InvokeAsync<T>(string funcName, params object?[]? args)
         {
-            var result = await Js.InvokeAsync<T>($"{Editor}.{funcName}", args);
+            var editor = await GetEditor();
+            var result = await editor.InvokeAsync<T>(funcName, args);
             return result;
         }
 
         protected virtual async ValueTask InvokeVoidAsync(string funcName, params object?[]? args)
         {
-            await Js.InvokeVoidAsync($"{Editor}.{funcName}", args);
+            var editor = await GetEditor();
+            await editor.InvokeVoidAsync(funcName, args);
         }
 
         #endregion

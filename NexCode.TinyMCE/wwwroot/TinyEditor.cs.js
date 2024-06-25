@@ -16,6 +16,28 @@
 //}
 
 export function init(options) {
+
+    Object.getOwnPropertyNames(options).forEach((el) => {
+        if (!el.endsWith("regexp"))
+            return;
+
+        var rg = options[el];
+        var flags = "";
+        if (rg[0] == "/" && rg.lastIndexOf("/") != -1) {
+            flags = rg.substring(rg.lastIndexOf("/") + 1)
+            rg = rg.substring(1, rg.lastIndexOf("/"))
+        }
+
+        options[el] = new RegExp(rg,flags)
+    });
+
+
+    options.setup = (editor) => {
+        editor.on("change", e => options.DotNetHelper.invokeMethodAsync(options.onchange));
+        editor.on("blue", e => options.DotNetHelper.invokeMethodAsync(options.onblur));
+    };
+
+
     tinymce.init(options);
 }
 

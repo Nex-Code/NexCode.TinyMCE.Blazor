@@ -14,7 +14,7 @@ namespace NexCode.TinyMCE.Blazor.Code
         {
             services.AddTransient<JsLoaderFactory>();
             services.AddTransient<TinyEditor>();
-
+            services.AddTransient<TinyEditorIntaliser>();
 
             return services;
         }

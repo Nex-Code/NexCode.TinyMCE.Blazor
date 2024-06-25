@@ -1,13 +1,25 @@
+@using Microsoft.JSInterop
 
 <CascadingValue TValue="RichTextEditor" Value="this" IsFixed="true">
-<CascadingValue TValue="IEditorScope" Value="this" IsFixed="true" >
-    @if (Plugins != null)
-    {
-        @Plugins
-    }
+    <CascadingValue TValue="IEditorScope" Value="this" IsFixed="true" >
+        @if (Plugins != null)
+        {
+            @Plugins
+        }
 
-    <div id="@Id">
-        @Html
-    </div>
+        <textarea id="@Id">
+            @Html
+        </textarea>
     </CascadingValue>
 </CascadingValue>
+
+
+@code
+{
+
+    [JSInvokable]
+    public async Task OnChange() =>await UpdateHtml();
+
+
+
+}

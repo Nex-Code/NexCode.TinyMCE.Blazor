@@ -4,7 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Options;
+using Microsoft.JSInterop;
 using NexCode.TinyMCE.Blazor.Code;
 
 namespace NexCode.TinyMCE.Blazor
@@ -20,6 +23,11 @@ namespace NexCode.TinyMCE.Blazor
 
         [Parameter] public string Html { get; set; } = string.Empty;
         [Parameter] public EventCallback<string> HtmlChanged { get; set; }
+        
+
+        [Parameter]
+        public EventCallback<EditorOptions> OnInitalise { get; set; }
+
 
         [Parameter] public bool DisableLoadOnRender { get; set; }
         [Parameter] public bool ContextMenuNeverUseNative { get; set; }
@@ -28,7 +36,9 @@ namespace NexCode.TinyMCE.Blazor
         public RenderFragment? Plugins { get; set; }
 
 
-        [Inject] private TinyEditorIntaliser TinyEditor { get; set; } = default!;
+        [Inject] private TinyEditorIntaliser Intaliser { get; set; } = default!;
+
+        private TinyEditor TinyEditor { get; set; } = default!;
 
         private bool _loaded;
 
@@ -46,7 +56,27 @@ namespace NexCode.TinyMCE.Blazor
                 return;
             _loaded = true;
 
-            await TinyEditor.Init(Id, PluginList, () => Intalised = true);
+            await Intaliser.Init(this, PluginList, editor =>
+            {
+                Intalised = true;
+                TinyEditor = editor;
+            }, CallOnInitalise);
+
+            return;
+
+            async Task CallOnInitalise(EditorOptions options)
+            {
+
+                options.Add("DotNetHelper", DotNetObjectReference.Create(this));
+                options.Add("onchange", nameof(OnChange));
+                options.Add("onblur", nameof(OnChange));
+
+
+                if (OnInitalise.HasDelegate)
+                    await OnInitalise.InvokeAsync(options);
+            }
+
+
         }
 
         private List<Plugin> PluginList { get; } = new List<Plugin>();
@@ -59,7 +89,16 @@ namespace NexCode.TinyMCE.Blazor
             PluginList.Add(plugin);
         }
 
-        
+
+        private async Task UpdateHtml()
+        {
+            var r = await TinyEditor.GetContent();
+            Html = r??string.Empty;
+            if (HtmlChanged.HasDelegate)
+                await HtmlChanged.InvokeAsync(Html);
+        }
+
+
     }
 
 

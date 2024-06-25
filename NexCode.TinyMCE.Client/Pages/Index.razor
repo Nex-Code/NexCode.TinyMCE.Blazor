@@ -1,12 +1,14 @@
 ﻿@page "/"
+@using System.Text.RegularExpressions
+@using NexCode.TinyMCE.Blazor.Code
 
 Rich text goes below:
 
-<RichTextEditor>
+<RichTextEditor OnInitalise="OnIntalise" @bind-Html="@Html">
     <Plugins>
         <DefaultPlugins/>
         <CustomPlugin Name="test">
-            <ToggleButton Text="A test button"/>
+            <ToggleButton Text="A test button" OnAction="api => api.Enabled = false" />
             <Seperator/>
             <ToggleButton Text="A test button Another"/>
         </CustomPlugin>
@@ -14,9 +16,35 @@ Rich text goes below:
 </RichTextEditor>
 
 
+<div>
+    @((MarkupString)Html)
+</div>
+
+
+<div>
+    @Html
+</div>
+
+
 @code
 {
+    private string Html { get; set; }
 
+    private void OnIntalise(EditorOptions obj)
+    {
 
+        obj.Add("noneditable_class", "token");
 
+        obj.CustomElements = "span";
+        obj.ContentStyle = @"
+
+.token{
+padding:0px 5px;
+background:lightgrey;
+cursor: not-allowed;
+display:inline-block;
+}
+";
+
+    }
 }

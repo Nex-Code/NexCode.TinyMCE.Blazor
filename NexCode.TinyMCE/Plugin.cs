@@ -57,7 +57,7 @@ namespace NexCode.TinyMCE.Blazor
         private const string PluginsString =
             "advlist autolink link image lists charmap print preview hr anchor pagebreak searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking table emoticons template paste help";
 
-        private const string ToolbarString = "undo redo | styles | bold italic | alignleft aligncenter alignright alignjustify | outdent indent";
+        private const string ToolbarString = "undo redo | styles | bold italic | alignleft aligncenter alignright alignjustify | outdent indent | code";
         private const string MenuString = "File Edit View Insert Format Tools Table Help";
 
         public IEnumerable<string> PluginNames { get; } = PluginsString.Split(" ");
