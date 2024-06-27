@@ -37,7 +37,7 @@ namespace NexCode.TinyMCE.Blazor
         public bool ExcludeDefaultPlugins { get; set; }
 
 
-        [Inject] private TinyEditorIntaliser Intaliser { get; set; } = default!;
+        [Inject] private TinyEditorIntaliser? Intaliser { get; set; } = default!;
 
 
         public IEditor Editor { get; private set; } = default!;
@@ -58,16 +58,21 @@ namespace NexCode.TinyMCE.Blazor
                 return;
             _loaded = true;
 
-            await Intaliser.Init(this, PluginList, editor =>
+            await Intaliser!.Init(this, PluginList, CallOnInitalise, AfterLoad);
+
+            return;
+
+
+            async ValueTask AfterLoad(IEditor editor)
             {
                 Intalised = true;
                 Editor = editor;
                 StateHasChanged();
-            }, CallOnInitalise);
+                if(Intaliser!=null)
+                    await Intaliser.DisposeAsync();
+            }
 
-            return;
-
-            async Task CallOnInitalise(EditorOptions options)
+            async ValueTask CallOnInitalise(EditorOptions options)
             {
 
                 options.Add("DotNetHelper", DotNetObjectReference.Create(this));

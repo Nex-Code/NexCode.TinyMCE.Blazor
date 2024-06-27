@@ -8,6 +8,23 @@ namespace NexCode.TinyMCE.Blazor.Code
 {
     public class EditorOptions : Dictionary<string, object>
     {
+        public bool Promotion
+        {
+            get => (this.GetValueOrDefault("promotion") as bool?) ??false;
+            set => Replace("promotion", value);
+        }
+
+        public bool Branding
+        {
+            get => (this.GetValueOrDefault("branding") as bool?) ??false;
+            set => Replace("branding", value);
+        }
+
+        public string? LicenseKey
+        {
+            get => this.GetValueOrDefault("license_key")?.ToString();
+            set => Replace("license_key", value);
+        }
 
 
         public string? Selector
@@ -72,6 +89,5 @@ namespace NexCode.TinyMCE.Blazor.Code
             if(value!=null)
                 this.Add(key, value);
         }
-      
     }
 }

@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 
 namespace NexCode.TinyMCE.Blazor.Code
@@ -16,8 +18,11 @@ namespace NexCode.TinyMCE.Blazor.Code
 
     public class TinyEditorIntaliser : JsInteropBase
     {
-        public TinyEditorIntaliser(IJSRuntime jsRuntime) : base(jsRuntime)
+        private TinyMCESettings Settings { get; }
+
+        public TinyEditorIntaliser(IJSRuntime jsRuntime, IOptions<TinyMCESettings> config) : base(jsRuntime)
         {
+            Settings = config.Value;
         }
 
         protected override string ScriptPath => "./_content/NexCode.TinyMCE.Blazor/TinyEditor.cs.js";
@@ -32,43 +37,46 @@ namespace NexCode.TinyMCE.Blazor.Code
         }
 
 
-        public async ValueTask Init(string selector, IEnumerable<Plugin> plugins, Action? afterLoad = null,
-            Action<EditorOptions>? onInitalise = null)
+
+
+        public async ValueTask Init(IEditorScope editor, IEnumerable<Plugin> plugins) =>
+            await Init(editor, plugins, options => ValueTask.CompletedTask, editor1 => ValueTask.CompletedTask);
+
+        public async ValueTask Init(IEditorScope editor, IEnumerable<Plugin> plugins,
+            Func<EditorOptions, ValueTask> onInitalise) =>
+            await Init(editor, plugins, onInitalise, editor1 => ValueTask.CompletedTask);
+
+        public async ValueTask Init(IEditorScope editor, IEnumerable<Plugin> plugins,
+            Func<IEditor, ValueTask> afterLoad) =>
+            await Init(editor, plugins, options => ValueTask.CompletedTask, afterLoad);
+
+        public async ValueTask Init(IEditorScope editor, IEnumerable<Plugin> plugins, Func<EditorOptions, ValueTask> onInitalise, Func<IEditor, ValueTask> afterLoad)
         {
-            await Init(selector, plugins, afterLoad, objects => CallOnIntalise(onInitalise, objects));
-            return;
-                
-            Task CallOnIntalise(Action<EditorOptions>? func, EditorOptions objects)
-            {
-                if (func != null)
-                    func(objects);
+            await Init(editor.EditorId, plugins, onInitalise, NewAfterLoad);
 
-                return Task.CompletedTask;
-            }
-            
-        }
-
-
-        public async ValueTask Init(IEditorScope editor, IEnumerable<Plugin> plugins, Action<IEditor>? afterLoad = null,
-            Func<EditorOptions, Task>? onInitalise = null)
-        {
-
-            var orgAfterLoad = afterLoad;
-
-            await Init(editor.EditorId, plugins, NewAfterLoad, onInitalise);
-
-            void NewAfterLoad()
+            async ValueTask NewAfterLoad()
             {
                 var tinyEditor = new TinyEditor(JsRuntime, editor);
-                if (orgAfterLoad != null) 
-                    orgAfterLoad.Invoke(tinyEditor);
+                await afterLoad.Invoke(tinyEditor);
             }
-
 
         }
 
 
-        public async ValueTask Init(string selector, IEnumerable<Plugin> plugins, Action? afterLoad =null, Func<EditorOptions, Task>? onInitalise = null)
+        public async ValueTask Init(string selector, IEnumerable<Plugin> plugins) =>
+            await Init(selector, plugins, options => ValueTask.CompletedTask, () => ValueTask.CompletedTask);
+
+        public async ValueTask Init(string selector, IEnumerable<Plugin> plugins,
+            Func<EditorOptions, ValueTask> onInitalise) =>
+            await Init(selector, plugins, onInitalise, () => ValueTask.CompletedTask);
+
+        public async ValueTask Init(string selector, IEnumerable<Plugin> plugins,
+            Func<ValueTask> afterLoad) =>
+            await Init(selector, plugins, options => ValueTask.CompletedTask, afterLoad);
+
+
+
+        public async ValueTask Init(string selector, IEnumerable<Plugin> plugins, Func<EditorOptions, ValueTask> onInitalise, Func<ValueTask> afterLoad)
         {
             var plugs = new List<string>();
             var toolbar = new List<string>();
@@ -77,7 +85,13 @@ namespace NexCode.TinyMCE.Blazor.Code
             var contextMenu = new List<string>();
             var contextForms = new List<string>();
 
-            var options = new EditorOptions();
+            var options = new EditorOptions()
+            {
+                Promotion = Settings.ShowPromotion,
+                Branding = Settings.ShowBranding,
+                LicenseKey = Settings.LicenseKey
+            };
+
             var pluginRegisters = new List<ValueTask>();
 
             options.Selector = "#"+selector;
@@ -116,20 +130,15 @@ namespace NexCode.TinyMCE.Blazor.Code
             if (contextMenu.Any())
                 options.Contextmenu = string.Join(" ", contextMenu);
 
-            if (options.Remove("menu", out object menuItems))
+            if (options.Remove("menu", out object? menuItems))
             {
-                var items = (IEnumerable<Menu>)menuItems;
-                options.Add("menu", items.ToDictionary(i=>i.Title));
+                if (menuItems is IEnumerable<Menu> items)
+                    options.Add("menu", items.ToDictionary(i=>i.Title));
             }
 
-
-            if(onInitalise!=null)
-                await onInitalise.Invoke(options);
-
+            await onInitalise.Invoke(options);
             await InvokeVoidAsync("init", options);
-
-            if(afterLoad!=null)
-                afterLoad.Invoke();
+            await afterLoad.Invoke();
         }
 
         public async ValueTask RegisterPlugin(CustomPlugin plugin)

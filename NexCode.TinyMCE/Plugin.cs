@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
+using NexCode.TinyMCE.Blazor.Code;
 
 namespace NexCode.TinyMCE.Blazor
 {
@@ -28,7 +30,7 @@ namespace NexCode.TinyMCE.Blazor
         private RichTextEditor? Parent { get; set; }
 
 
-        public Action<IDictionary<string,object>>? AdditionalConfig { get; init; }
+        public Action<IDictionary<string,object>>? AdditionalConfig { get; protected set; }
 
 
         protected override void OnInitialized()
@@ -54,24 +56,30 @@ namespace NexCode.TinyMCE.Blazor
     public class DefaultPlugins : Plugin
     {
 
-        private const string PluginsString =
-            "advlist autolink link image lists charmap print preview hr anchor pagebreak searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking table emoticons template paste help";
+        
 
-        private const string ToolbarString = "undo redo | styles | bold italic | alignleft aligncenter alignright alignjustify | outdent indent | code";
-        private const string MenuString = "File Edit View Insert Format Tools Table Help";
+        public IEnumerable<string> PluginNames { get; private set; }
+        public IEnumerable<string> ToolbarNames { get; private set; }
+        public IEnumerable<string> MenuName { get; private set; }
 
-        public IEnumerable<string> PluginNames { get; } = PluginsString.Split(" ");
-        public IEnumerable<string> ToolbarNames { get; } = ToolbarString.Split(" ");
-        public IEnumerable<string> MenuName { get; } = MenuString.Split(" ");
 
 
         [Parameter] public IEnumerable<string> ExcludeButtons { get; set; } = Array.Empty<string>();
         [Parameter] public IEnumerable<string> ExcludePlugins { get; set; } = Array.Empty<string>();
-        [Parameter] public IEnumerable<string> ExcludeMenu { get; set; } = Array.Empty<string>();  
+        [Parameter] public IEnumerable<string> ExcludeMenu { get; set; } = Array.Empty<string>();
 
 
-        public DefaultPlugins() : base()
+
+        [Inject] private IOptions<TinyMCESettings> SettingsOptions { get; set; } = default!;
+
+        protected override void OnInitialized()
         {
+            base.OnInitialized();
+
+            var ops = SettingsOptions.Value;
+            PluginNames = ops.DefaultPlugins.ToArray();
+            ToolbarNames = ops.DefaultToolbar.ToArray();
+            MenuName = ops.DefaultMenu.ToArray();
             AdditionalConfig = AddDefaultMenu;
         }
 
