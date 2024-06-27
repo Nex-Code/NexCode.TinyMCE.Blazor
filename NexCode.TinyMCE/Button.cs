@@ -2,7 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using NexCode.TinyMCE.Blazor.Code;
 using static NexCode.TinyMCE.Blazor.Button;
 using static NexCode.TinyMCE.Blazor.ToggleButton;
 
@@ -20,10 +24,27 @@ namespace NexCode.TinyMCE.Blazor
 
     public class MenuButton : BaseMenuItem
     {
+        [JsonIgnore, Parameter, EditorRequired]
+        public GetItems Fetch { get; init; } = (_) => ValueTask.FromResult(Array.Empty<BaseMenuItem>().AsEnumerable());
 
-        public Func<IEnumerable<ITinyItem>> Fetch { get; init; }
+        public bool HasFetch => true;
 
         public override string Type => "menubutton";
+
+
+        [JSInvokable]
+        public async ValueTask<IEnumerable<BaseMenuItem>> OnFetchCall()
+        {
+            var eventFactory = new TinyEventFactory(this);
+            var items = await Fetch(eventFactory);
+
+            foreach (var item in items)
+                item.SetEditor(Editor);
+
+            return items;
+            //return new MenuButtonResult{Api = api, Items = items};
+        }
+
     }
 
     public class Seperator : BaseMenuItem
@@ -33,4 +54,21 @@ namespace NexCode.TinyMCE.Blazor
             get => "|" ; 
             set => _ = value; }
     }
+
+    public record MenuButtonResult : EventResult<MenuApi>
+    {
+        public IEnumerable<BaseMenuItem> Items { get; set; }
+    };
+
+    public class MenuButtonApi : MenuApi
+    {
+        public string Text { get; set; }
+        public string Icon { get; set; }
+    }
+
+
+
+    public delegate ValueTask<IEnumerable<BaseMenuItem>> GetItems(TinyEventFactory eventCallbackFactory);
+
+
 }

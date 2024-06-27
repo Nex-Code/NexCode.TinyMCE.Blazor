@@ -53,17 +53,22 @@ export function registerPlugin(id, items) {
     tinymce.PluginManager.add(id,
         function(editor, url) {
             items.forEach(function(item) {
-                addItem(editor, item.func, item.details, item.dotnetHelper);
+                addItem(editor, item.func, item.details);
             });
         });
 }
 
-export function addItem(editor, funcName, details, dotnetHelper) {
+export function addItem(editor, funcName, details) {
 
 
-    const CallMenuApiFunc = (api, func) => {
-        dotnetHelper.invokeMethodAsync(func, GetMenuApiItem(api)).then(r => SetMenuApi(api, r.result))
-    }
+    const CallMenuApiFunc = (api, func, dotnetHelper, callback) =>
+        dotnetHelper.invokeMethodAsync(func, GetMenuApiItem(api)).then(r => {
+                var results = r.result;
+                if (callback != undefined)
+                    callback(results)
+                SetMenuApi(api, results.api)
+            });
+    
 
     const GetMenuApiItem = (api) => {
 
@@ -76,112 +81,91 @@ export function addItem(editor, funcName, details, dotnetHelper) {
             obj.active = api.isActive();
         }
 
+        if (api.getText != undefined) {
+            obj.text = api.getText();
+        }
+        if (api.getIcon != undefined) {
+            obj.icon = api.getIcon();
+        }
+
         return obj
     }
 
     const SetMenuApi = (api, r) => {
         api.setEnabled(r.enabled);
+
         if (api.setActive != undefined)
             api.setActive(r.active);
+
+        if (api.setText != undefined)
+            api.setText(r.text);
+
+        if (api.setIcon != undefined)
+            api.setIcon(r.icon);
+
     }
 
-    switch (funcName) {
-        case "addButton":
-        case "addToggleButton":
-        case "addMenuButton":
-        case "addMenuButton":
-        case "addGroupToolbarButton":
-        case "addSplitButton":
-            {
 
-                if (details.hasSetup) {
-                    details.onSetup = (api) => {
-                        CallMenuApiFunc(api, "OnSetupCall");
+    const cleanObject = (item) => {
+        if (Array.isArray(item)) {
+            item.forEach(el => cleanObject(el))
+        } else {
+            Object.getOwnPropertyNames(item).forEach((el) => {
+                var v = item[el];
 
-                        if (detail.hasTeardown) {
-                            return (api) => CallMenuApiFunc(api, "OnTeardownCall");
-                        }
-                    }
-                } else {
-                    details.onSetup = () => { };
+                if (v && typeof (v) === 'object') {
+                    cleanObject(v);
+                    return;
                 }
 
-                if (details.hasAction) {
-                    details.onAction = (api) => CallMenuApiFunc(api, "OnActionCall");
-                } else {
-                    details.onAction = () => { };
+                if (v === null) {
+                    delete item[el];
+                }
+            });
+        }
+
+        wireInEvents(item);
+
+        return item;
+    }
+
+    const wireInEvents = (item) => {
+
+        var helper = item.dotnetHelper;
+        if (item.hasSetup) {
+            item.onSetup = (api) => {
+                CallMenuApiFunc(api, "OnSetupCall", helper);
+
+                if (item.hasTeardown) {
+                    return (api) => CallMenuApiFunc(api, "OnTeardownCall", helper);
                 }
             }
+        } else {
+            item.onSetup = () => { };
+        }
+
+        if (item.hasAction) {
+            item.onAction = (api) => CallMenuApiFunc(api, "OnActionCall", helper);
+        } else {
+            item.onAction = () => { };
+        }
+
+        if (item.hasFetch) {
+            item.fetch = (callback, context) => helper.invokeMethodAsync("OnFetchCall").then(r => callback(cleanObject(r.result)));
+        }
+    }
+
+
+
+    switch (funcName) {
+        case "addMenuButton":
+        case "addToggleButton":
+        case "addButton":
+        case "addGroupToolbarButton":
+        case "addSplitButton":
+            wireInEvents(details);
     };
 
     editor.ui.registry[funcName](details.name, details);
 }
 
-
-
-export function addItemToEditor(editorId, funcName, details, dotnetHelper) {
-    GetEditorAndExecute(id, (editor) => addItem(editor, funcName, details, dotnetHelper));
-}
-
-function GetEditorAndExecute(id, func) {
-
-    if (tinymce == null)
-        return null;
-
-    var editor = tinymce.get(id);
-
-    if (editor == null)
-        return null;
-
-    return func(editor);
-}
-
-
-export function getContent(id, args) {
-    return GetEditorAndExecute(id,
-        (editor) => {
-            if (args == null)
-                return editor.getContent();
-            return editor.getContent(args);
-        });
-}
-
-export function getParam(id, name, defaultValue, type) {
-    return GetEditorAndExecute(id, (editor) => editor.getParam(name, defaultValue, type));
-}
-
-export function hasPlugin(id, name, loaded) {
-    return GetEditorAndExecute(id, (editor) => editor.hasPlugin(name, loaded));
-}
-
-export function hide(id) {
-    GetEditorAndExecute(id, (editor) => editor.hide());
-}
-export function load(id) {
-    return GetEditorAndExecute(id, (editor) => editor.load());
-}
-
-export function remove(id) {
-    GetEditorAndExecute(id, (editor) => editor.remove());
-}
-export function save(id) {
-
-    if (!content)
-        content = "";
-
-    return GetEditorAndExecute(id, (editor) => editor.save());
-}
-export function setContent(id, content, args) {
-    return GetEditorAndExecute(id, (editor) => editor.setContent(content, args));
-}
-
-export function setProgressState(id, state, time) {
-    return GetEditorAndExecute(id, (editor) => editor.setProgressState(state, time));
-}
-export function show(id) {
-    GetEditorAndExecute(id, (editor) => editor.show());
-}
-
-export function insertContent(id, content, args) {
-    GetEditorAndExecute(id, (editor) => editor.insertContent(content, args));
-}

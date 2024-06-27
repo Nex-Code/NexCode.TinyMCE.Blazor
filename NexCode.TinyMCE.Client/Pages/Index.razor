@@ -6,11 +6,8 @@ Rich text goes below:
 
 <RichTextEditor OnInitalise="OnIntalise" @bind-Html="@Html">
     <Plugins>
-        <DefaultPlugins/>
         <CustomPlugin Name="test">
-            <ToggleButton Text="A test button" OnAction="ee => ee.MenuApi.Enabled = false" />
-            <Seperator/>
-            <ToggleButton Text="A test button Another"/>
+            <MenuButton Text="Menu Item" Fetch="Fetch"/>
         </CustomPlugin>
     </Plugins>
 </RichTextEditor>
@@ -46,5 +43,22 @@ display:inline-block;
 }
 ";
 
+    }
+
+    
+
+    private async ValueTask<IEnumerable<BaseMenuItem>> Fetch(TinyEventFactory eventCallbackFactory)
+    {
+
+
+        var mi = new MenuItem()
+        {
+            Text = "Test Item",
+            OnAction = eventCallbackFactory.Create<EditorEvent>((ee) => ee.Editor.InsertContent("test"))
+        };
+        return new[] {
+            
+            mi,
+            new MenuItem() { Text = "A second item" } };
     }
 }

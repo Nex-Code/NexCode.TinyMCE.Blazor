@@ -12,35 +12,15 @@ using NexCode.TinyMCE.Blazor.Code;
 
 namespace NexCode.TinyMCE.Blazor
 {
-    public interface ITinySpec
-    {
-        public string Type { get; }
+  
 
-    }
-
-    public interface ITinyItem : ITinySpec
-    {
-
-        public string? Icon { get; }
-
-        public string? Tooltip { get; }
-
-        public string Text { get; }
-
-        public string? Shortcut { get; }
-
-        public bool Enabled { get; }
-
-        public string Type { get; }
-    }
-
-    public abstract class ItemSpec : ITinySpec
+    public abstract class ItemSpec
     {
         public abstract string Type { get; }
     }
 
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-    public abstract class BaseMenuItem : ComponentBase, ITinyItem
+    public abstract class BaseMenuItem : ComponentBase
     {
         [Parameter]
         [JsonIgnore]
@@ -58,9 +38,6 @@ namespace NexCode.TinyMCE.Blazor
         public bool HasSetup => OnSetup.HasDelegate;
         public bool HasTeardown => OnTeardown.HasDelegate;
         public bool HasAction => OnAction.HasDelegate;
-
-
-
 
         [Parameter]
         [JsonIgnore]
@@ -86,7 +63,6 @@ namespace NexCode.TinyMCE.Blazor
 
         [Parameter] public bool Enabled { get; set; } = true;
 
-        [JsonIgnore]
         public abstract string Type { get; }
         
 
@@ -94,7 +70,13 @@ namespace NexCode.TinyMCE.Blazor
         [JsonIgnore]
         protected CustomPlugin? Parent { get; set; }
 
-        [Inject] protected IEditor Editor { get; set; } = default!;
+        [CascadingParameter] 
+        internal IEditor Editor { get; private set; } = default!;
+
+        internal virtual void SetEditor(IEditor editor)
+        {
+            Editor = editor;
+        }
 
 
         protected override void OnInitialized()
@@ -108,25 +90,41 @@ namespace NexCode.TinyMCE.Blazor
         }
 
 
+        [JSInvokable]
+        public async ValueTask<MenuEventResult> OnSetupCall(MenuApi item) => await CallEvent(item, OnSetup);
 
         [JSInvokable]
-        public async ValueTask<MenuApi> OnSetupCall(MenuApi item) => await CallEvent(item, OnSetup);
+        public async ValueTask<MenuEventResult> OnTeardownCall(MenuApi item) => await CallEvent(item, OnTeardown);
 
         [JSInvokable]
-        public async ValueTask<MenuApi> OnTeardownCall(MenuApi item) => await CallEvent(item, OnTeardown);
+        public async ValueTask<MenuEventResult> OnActionCall(MenuApi item) => await CallEvent(item, OnAction);
 
-        [JSInvokable]
-        public async ValueTask<MenuApi> OnActionCall(MenuApi item) => await CallEvent(item, OnAction);
-
-        private async ValueTask<MenuApi> CallEvent(MenuApi apiItem, EventCallback<EditorEvent> handler)
+        protected async Task<MenuEventResult> CallEvent(MenuApi apiItem, EventCallback<EditorEvent> handler)
         {
             if (handler.HasDelegate)
                 await handler.InvokeAsync(new EditorEvent(apiItem, Editor));
-            return apiItem;
+            return new MenuEventResult() { Api = apiItem };
         }
+
+
+        public DotNetObjectReference<BaseMenuItem> DotnetHelper => DotNetObjectReference.Create(this);
+
     }
 
     public record EditorEvent(MenuApi MenuApi, IEditor? Editor);
+
+
+
+    public abstract record EventResult();
+
+    public abstract record EventResult<TApi> : EventResult where TApi: MenuApi
+    {
+        public TApi Api { get; init; }
+    }
+
+    public record MenuEventResult : EventResult<MenuApi>;
+
+
 
 
     public class MenuApi

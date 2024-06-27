@@ -1,15 +1,24 @@
 @using Microsoft.JSInterop
+@using NexCode.TinyMCE.Blazor.Code
 
 <CascadingValue TValue="RichTextEditor" Value="this" IsFixed="true">
-    <CascadingValue TValue="IEditorScope" Value="this" IsFixed="true" >
+    <CascadingValue TValue="IEditorScope" Value="this" IsFixed="true">
+        <CascadingValue TValue="IEditor" Value="Editor">
+
+        @*@if (!ExcludeDefaultPlugins)
+        {
+        <DefaultPlugins />
+        }*@
         @if (Plugins != null)
         {
+
             @Plugins
         }
 
         <textarea id="@Id">
             @Html
         </textarea>
+        </CascadingValue>
     </CascadingValue>
 </CascadingValue>
 

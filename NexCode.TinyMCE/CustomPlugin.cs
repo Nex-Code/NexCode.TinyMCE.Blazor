@@ -6,12 +6,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NexCode.TinyMCE.Blazor.Code;
+using Microsoft.AspNetCore.Components.Rendering;
 
 namespace NexCode.TinyMCE.Blazor
 {
-    public partial class CustomPlugin
+    public class CustomPlugin : Plugin
     {
-        [Parameter] public RenderFragment ChildContent { get; set; }
+        [Parameter] public RenderFragment? ChildContent { get; set; }
 
 
         public IReadOnlyList<BaseMenuItem> Items => ChildItems.AsReadOnly();
@@ -65,8 +66,15 @@ namespace NexCode.TinyMCE.Blazor
         }
 
 
-      
+        protected override void BuildRenderTree(RenderTreeBuilder __builder)
+        {
+            if (ChildContent != null)
+            {
+                __builder.AddCascadingValue<CustomPlugin>(this, ChildContent);
+            }
+            base.BuildRenderTree(__builder);
+        }
     }
 
-    public record RegisterableItem(string Func, object Details, DotNetObjectReference<BaseMenuItem> DotnetHelper);
+    public record RegisterableItem(string Func, object Details);
 }

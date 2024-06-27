@@ -110,7 +110,7 @@ namespace NexCode.TinyMCE.Blazor.Code
             if(plugs.Any())
                 options.Plugins = string.Join(" ",plugs);
             if (toolbar.Any())
-                options.Plugins = string.Join(" ", toolbar);
+                options.Toolbar = string.Join(" ", toolbar);
             if (menu.Any())
                 options.Menubar = string.Join(" ", menu);
             if (contextMenu.Any())

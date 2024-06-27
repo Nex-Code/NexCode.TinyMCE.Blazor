@@ -33,11 +33,14 @@ namespace NexCode.TinyMCE.Blazor
         [Parameter]
         public RenderFragment? Plugins { get; set; }
 
+        [Parameter]
+        public bool ExcludeDefaultPlugins { get; set; }
+
 
         [Inject] private TinyEditorIntaliser Intaliser { get; set; } = default!;
 
 
-        public IEditor Editor { get; private set; }
+        public IEditor Editor { get; private set; } = default!;
 
         private bool _loaded;
 
@@ -59,6 +62,7 @@ namespace NexCode.TinyMCE.Blazor
             {
                 Intalised = true;
                 Editor = editor;
+                StateHasChanged();
             }, CallOnInitalise);
 
             return;
