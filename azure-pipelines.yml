@@ -16,9 +16,9 @@ variables:
       major: 1
       minor: 1
       ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
-        suffix: 'prod'
+        suffix: ''
       ${{ else }}:
-        suffix: 'dev'
+        suffix: '-pre'
       count: $[ counter(format('{0}.{1}', variables['major'], variables['major']), 0) ]
       patch: $[format('{0}{1}', variables['count'],variables['suffix'])]
 steps:
