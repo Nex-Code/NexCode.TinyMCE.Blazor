@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Linq;
 using System.Text;
@@ -37,21 +38,21 @@ namespace NexCode.TinyMCE.Blazor
     {
         public abstract string Type { get; }
     }
-    
+
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
     public abstract class BaseMenuItem : ComponentBase, ITinyItem
     {
         [Parameter]
         [JsonIgnore]
-        public EventCallback<MenuApi> OnSetup { get; init; }
+        public EventCallback<EditorEvent> OnSetup { get; init; }
 
         [Parameter]
         [JsonIgnore]
-        public EventCallback<MenuApi> OnTeardown { get; init; }
+        public EventCallback<EditorEvent> OnTeardown { get; init; }
 
         [Parameter]
         [JsonIgnore]
-        public EventCallback<MenuApi> OnAction { get; set; }
-
+        public EventCallback<EditorEvent> OnAction { get; set; }
 
 
         public bool HasSetup => OnSetup.HasDelegate;
@@ -93,7 +94,7 @@ namespace NexCode.TinyMCE.Blazor
         [JsonIgnore]
         protected CustomPlugin? Parent { get; set; }
 
-        [Inject] protected TinyEditor Editor { get; set; } = default!;
+        [Inject] protected IEditor Editor { get; set; } = default!;
 
 
         protected override void OnInitialized()
@@ -117,15 +118,15 @@ namespace NexCode.TinyMCE.Blazor
         [JSInvokable]
         public async ValueTask<MenuApi> OnActionCall(MenuApi item) => await CallEvent(item, OnAction);
 
-        private async ValueTask<MenuApi> CallEvent(MenuApi apiItem, EventCallback<MenuApi> handler)
+        private async ValueTask<MenuApi> CallEvent(MenuApi apiItem, EventCallback<EditorEvent> handler)
         {
             if (handler.HasDelegate)
-                await handler.InvokeAsync(apiItem);
+                await handler.InvokeAsync(new EditorEvent(apiItem, Editor));
             return apiItem;
         }
     }
 
-
+    public record EditorEvent(MenuApi MenuApi, IEditor? Editor);
 
 
     public class MenuApi
@@ -134,6 +135,7 @@ namespace NexCode.TinyMCE.Blazor
         /*public string Text { get; set; }
         public string Icon { get; set; }*/
         public bool Active { get; set; }
+
     }
 
     [Flags]

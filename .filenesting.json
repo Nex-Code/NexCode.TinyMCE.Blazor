@@ -1,0 +1,25 @@
+{
+  "help": "https://go.microsoft.com/fwlink/?linkid=866610",
+
+  "dependentFileProviders": {
+    "add": {
+      "extensionToExtension": {
+        "add": {
+          ".css": [
+            ".scss"
+          ]
+        }
+      },
+      "pathSegment": {
+        "add": {
+          ".*": [
+            ".razor",
+            ".razor.cs"
+          ]
+        }
+      }
+
+
+    }
+  }
+}

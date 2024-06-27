@@ -13,6 +13,8 @@ namespace NexCode.TinyMCE.Blazor.Code
         public static IServiceCollection AddTinyMCE(this IServiceCollection services)
         {
             services.AddTransient<JsLoaderFactory>();
+            services.AddTransient<IEditor, TinyEditor>();
+            services.AddTransient<IJsEditor, TinyEditor>();
             services.AddTransient<TinyEditor>();
             services.AddTransient<TinyEditorIntaliser>();
 

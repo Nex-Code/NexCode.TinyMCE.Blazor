@@ -13,7 +13,6 @@ namespace NexCode.TinyMCE.Blazor
     {
         [Parameter] public RenderFragment ChildContent { get; set; }
 
-        [Inject] private TinyEditor Editor { get; set; } = default!;
 
         public IReadOnlyList<BaseMenuItem> Items => ChildItems.AsReadOnly();
 

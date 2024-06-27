@@ -49,7 +49,7 @@ namespace NexCode.TinyMCE.Blazor.Code
         }
 
 
-        public async ValueTask Init(IEditorScope editor, IEnumerable<Plugin> plugins, Action<TinyEditor>? afterLoad = null,
+        public async ValueTask Init(IEditorScope editor, IEnumerable<Plugin> plugins, Action<IEditor>? afterLoad = null,
             Func<EditorOptions, Task>? onInitalise = null)
         {
 
@@ -60,7 +60,8 @@ namespace NexCode.TinyMCE.Blazor.Code
             void NewAfterLoad()
             {
                 var tinyEditor = new TinyEditor(JsRuntime, editor);
-                if (orgAfterLoad != null) orgAfterLoad.Invoke(tinyEditor);
+                if (orgAfterLoad != null) 
+                    orgAfterLoad.Invoke(tinyEditor);
             }
 
 
@@ -141,7 +142,24 @@ namespace NexCode.TinyMCE.Blazor.Code
 
     }
 
-    public class TinyEditor
+
+    public interface IEditor
+    {
+        public ValueTask<string?> GetContent();
+        public ValueTask SetContent(string value);
+        public ValueTask InsertContent(string value, object? args=null);
+
+    }
+
+    public interface IJsEditor : IEditor
+    {
+        public ValueTask<T> InvokeAsync<T>(string funcName, params object?[]? args);
+        public ValueTask InvokeVoidAsync(string funcName, params object?[]? args);
+    }
+
+
+
+    internal class TinyEditor : IJsEditor
     {
 
         #region Intalisation and JS calling
@@ -160,14 +178,10 @@ namespace NexCode.TinyMCE.Blazor.Code
             EditorScope = scope;
         }
 
-
-        public async ValueTask<string?> GetContent()
-        {
-            var r = await InvokeAsync<string>("getContent");
-            return r;
-        }
-
         private IJSRuntime Js { get; }
+
+      
+        
 
         private async ValueTask<IJSObjectReference> GetEditor()
         {
@@ -177,14 +191,14 @@ namespace NexCode.TinyMCE.Blazor.Code
             return await Js.InvokeAsync<IJSObjectReference>("tinymce.EditorManager.get", EditorScope.EditorId);
         }
 
-        protected virtual async ValueTask<T> InvokeAsync<T>(string funcName, params object?[]? args)
+        public virtual async ValueTask<T> InvokeAsync<T>(string funcName, params object?[]? args)
         {
             var editor = await GetEditor();
             var result = await editor.InvokeAsync<T>(funcName, args);
             return result;
         }
 
-        protected virtual async ValueTask InvokeVoidAsync(string funcName, params object?[]? args)
+        public virtual async ValueTask InvokeVoidAsync(string funcName, params object?[]? args)
         {
             var editor = await GetEditor();
             await editor.InvokeVoidAsync(funcName, args);
@@ -193,7 +207,21 @@ namespace NexCode.TinyMCE.Blazor.Code
         #endregion
 
 
+        public async ValueTask<string?> GetContent()
+        {
+            var r = await InvokeAsync<string>("getContent");
+            return r;
+        }
 
+        public async ValueTask SetContent(string value)
+        {
+            await InvokeVoidAsync("setContent", value);
+        }
+
+        public async ValueTask InsertContent(string value, object? args = null)
+        {
+            await InvokeVoidAsync("insertContent", value, args);
+        }
 
     }
 

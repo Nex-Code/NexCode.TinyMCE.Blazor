@@ -14,8 +14,6 @@ namespace NexCode.TinyMCE.Blazor
 {
     public partial class RichTextEditor : ComponentBase, IEditorScope
     {
-
-
         public string Id { get; } = "editor_"+ Guid.NewGuid().ToString().Replace("-", "");
 
         public string EditorId => Id;
@@ -38,7 +36,8 @@ namespace NexCode.TinyMCE.Blazor
 
         [Inject] private TinyEditorIntaliser Intaliser { get; set; } = default!;
 
-        private TinyEditor TinyEditor { get; set; } = default!;
+
+        public IEditor Editor { get; private set; }
 
         private bool _loaded;
 
@@ -59,7 +58,7 @@ namespace NexCode.TinyMCE.Blazor
             await Intaliser.Init(this, PluginList, editor =>
             {
                 Intalised = true;
-                TinyEditor = editor;
+                Editor = editor;
             }, CallOnInitalise);
 
             return;
@@ -92,12 +91,11 @@ namespace NexCode.TinyMCE.Blazor
 
         private async Task UpdateHtml()
         {
-            var r = await TinyEditor.GetContent();
+            var r = await Editor.GetContent();
             Html = r??string.Empty;
             if (HtmlChanged.HasDelegate)
                 await HtmlChanged.InvokeAsync(Html);
         }
-
 
     }
 
