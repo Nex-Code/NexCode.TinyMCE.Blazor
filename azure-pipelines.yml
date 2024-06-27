@@ -13,7 +13,14 @@ variables:
       buildConfiguration: 'Release'
       solution: '**/*.sln'
       project: '**/NexCode.TinyMCE.Blazor.csproj'
-
+      major: 1
+      minor: 1
+      ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+        suffix: 'prod'
+      ${{ else }}:
+        suffix: 'dev'
+      count: $[ counter(format('{0}.{1}', variables['major'], variables['major']), 0) ]
+      patch: $[format('{0}{1}', variables['count'],variables['suffix'])]
 steps:
 
 - task: DotNetCoreCLI@2
@@ -27,10 +34,9 @@ steps:
     command: 'pack'
     packagesToPack: '**/*.csproj'
     includesymbols: true
-    versioningScheme: 'byPrereleaseNumber'
-    majorVersion: '1'
-    minorVersion: '1'
-    patchVersion: '0'
+    majorVersion: $(variables['major'])
+    minorVersion: $(variables['minor'])
+    patchVersion: $(variables['patch'])
 
 - task: NuGetCommand@2
   inputs:
