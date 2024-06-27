@@ -1,0 +1,46 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: windows-latest
+
+variables:
+      buildConfiguration: 'Release'
+      solution: '**/*.sln'
+      project: '**/NexCode.TinyMCE.Blazor.csproj'
+      major: 1
+      minor: 1
+      ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+        suffix: ''
+      ${{ else }}:
+        suffix: '-pre'
+      count: $[ counter(format('{0}.{1}', variables['major'], variables['major']), 0) ]
+      patch: $[format('{0}{1}', variables['count'],variables['suffix'])]
+steps:
+
+- task: DotNetCoreCLI@2
+  displayName: Restore Nuget
+  inputs:
+    command: 'restore'
+    projects: $(project)
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/*.csproj'
+    includesymbols: true
+    majorVersion: $(variables['major'])
+    minorVersion: $(variables['minor'])
+    patchVersion: $(variables['patch'])
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: 'c8b3c643-0613-49c6-aee2-7a9d9833b985'
