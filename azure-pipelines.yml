@@ -20,7 +20,7 @@ variables:
       ${{ else }}:
         suffix: '-rc.'
       count: $[ counter(format('{0}.{1}', variables['major'], variables['minor']), 0) ]
-      version: $[format('{0}.{1}.{2}{3}',variables['major'],variables['minor'],variables['suffix'],variables['count'])]
+      version: $[format('{0}.{1}{2}.{3}',variables['major'],variables['minor'],variables['suffix'],variables['count'])]
 steps:
 
 - task: DotNetCoreCLI@2
