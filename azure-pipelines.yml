@@ -14,11 +14,12 @@ variables:
       solution: '**/*.sln'
       project: '**/NexCode.TinyMCE.Blazor.csproj'
       major: 1
-      minor: 1
       ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
         suffix: ''
+        minor: 1
       ${{ else }}:
         suffix: '-rc.'
+        minor: 2
       count: $[ counter(format('{0}.{1}', variables['major'], variables['minor']), 0) ]
       version: $[format('{0}.{1}{2}.{3}',variables['major'],variables['minor'],variables['suffix'],variables['count'])]
 steps:
