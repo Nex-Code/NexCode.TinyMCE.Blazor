@@ -23,11 +23,14 @@ steps:
     projects: $(project)
 
 - task: DotNetCoreCLI@2
-  displayName: Pack CMSG.Library.Common
   inputs:
     command: 'pack'
-    packagesToPack: $(project)
-    versioningScheme: 'byBuildNumber'
+    packagesToPack: '**/*.csproj'
+    includesymbols: true
+    versioningScheme: 'byPrereleaseNumber'
+    majorVersion: '1'
+    minorVersion: '1'
+    patchVersion: '0'
 
 - task: NuGetCommand@2
   inputs:
