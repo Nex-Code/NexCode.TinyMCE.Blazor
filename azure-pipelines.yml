@@ -18,10 +18,9 @@ variables:
       ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
         suffix: ''
       ${{ else }}:
-        suffix: '-pre'
+        suffix: '-rc.'
       count: $[ counter(format('{0}.{1}', variables['major'], variables['minor']), 0) ]
-      patch: $[format('{0}{1}', variables['count'],variables['suffix'])]
-      version: $[format('{0}.{1}.{2}',variables['major'],variables['minor'],variables['patch'])]
+      version: $[format('{0}.{1}.{2}{3}',variables['major'],variables['minor'],variables['suffix'],variables['count'])]
 steps:
 
 - task: DotNetCoreCLI@2
