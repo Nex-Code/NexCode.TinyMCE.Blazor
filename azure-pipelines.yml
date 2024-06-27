@@ -1,0 +1,37 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: windows-latest
+
+variables:
+      buildConfiguration: 'Release'
+      solution: '**/*.sln'
+      project: '**/NexCode.TinyMCE.Blazor.csproj'
+
+steps:
+
+- task: DotNetCoreCLI@2
+  displayName: Restore Nuget
+  inputs:
+    command: 'restore'
+    projects: $(project)
+
+- task: DotNetCoreCLI@2
+  displayName: Pack CMSG.Library.Common
+  inputs:
+    command: 'pack'
+    packagesToPack: $(project)
+    versioningScheme: 'byBuildNumber'
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: 'c8b3c643-0613-49c6-aee2-7a9d9833b985'
