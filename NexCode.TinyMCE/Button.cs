@@ -37,10 +37,12 @@ namespace NexCode.TinyMCE.Blazor
         {
             var eventFactory = new TinyEventFactory(this);
             var items = await Fetch(eventFactory);
-            items = items.ToArray();
 
-            foreach (var item in items)
-                item.SetEditor(Editor);
+            items = items.Select(i =>
+            {
+                i.SetEditor(Editor);
+                return i;
+            });
 
             return items;
         }
