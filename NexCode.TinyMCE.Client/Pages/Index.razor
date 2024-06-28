@@ -49,16 +49,10 @@ display:inline-block;
 
     private async ValueTask<IEnumerable<BaseMenuItem>> Fetch(TinyEventFactory eventCallbackFactory)
     {
-
-
-        var mi = new MenuItem()
+        return Enumerable.Range(0, 100).Select(i => new MenuItem()
         {
-            Text = "Test Item",
-            OnAction = eventCallbackFactory.Create<EditorEvent>((ee) => ee.Editor.InsertContent("test"))
-        };
-        return new[] {
-            
-            mi,
-            new MenuItem() { Text = "A second item" } };
+            Text = $"Menu Item {i}",
+                OnAction = eventCallbackFactory.Create<EditorEvent>((ee) => ee.Editor.InsertContent($"Menu item {i}"))
+        });
     }
 }
