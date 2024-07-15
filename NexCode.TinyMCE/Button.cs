@@ -57,7 +57,7 @@ namespace NexCode.TinyMCE.Blazor
             set => _ = value; }
     }
 
-    public record MenuButtonResult : EventResult<MenuApi>
+    public class MenuButtonResult : EventResult<MenuApi>
     {
         public IEnumerable<BaseMenuItem> Items { get; set; }
     };

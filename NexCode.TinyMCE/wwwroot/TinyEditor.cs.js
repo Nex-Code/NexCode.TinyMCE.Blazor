@@ -61,18 +61,21 @@ export function registerPlugin(id, items) {
 export function addItem(editor, funcName, details) {
 
 
-    const CallMenuApiFunc = (api, func, dotnetHelper, callback) =>
-        dotnetHelper.invokeMethodAsync(func, GetMenuApiItem(api)).then(r => {
-                var results = r.result;
-                if (callback != undefined)
-                    callback(results)
-                SetMenuApi(api, results.api)
-            });
+    
+
+    //const CallMenuApiFunc = async (api, func, dotnetHelper, callback) => {
+    //    let mApi = GetMenuApiItem(api);
+    //    let r = await dotnetHelper.invokeMethodAsync(func, mApi);
+    //    var results = r.result;
+    //    if (callback != undefined)
+    //        callback(results)
+    //    SetMenuApi(api, results.api)
+    //};
     
 
     const GetMenuApiItem = (api) => {
 
-        var obj = {
+        let obj = {
             enabled: api.isEnabled(),
             active: true
         };
@@ -129,15 +132,23 @@ export function addItem(editor, funcName, details) {
         return item;
     }
 
+
+    const CallMenuApiFunc = (helper, func, api) =>
+        helper.invokeMethodAsync(func, GetMenuApiItem(api)).then(r => SetMenuApi(api, r.result))
+
     const wireInEvents = (item) => {
 
-        var helper = item.dotnetHelper;
+        if (!item.helper && item.dotnetHelper) {
+            item.helper = item.dotnetHelper;
+        }
+
+
         if (item.hasSetup) {
-            item.onSetup = (api) => {
-                CallMenuApiFunc(api, "OnSetupCall", helper);
+            item.onSetup = async (api) => {
+                await CallMenuApiFunc(item.helper, "OnSetupCall", api);
 
                 if (item.hasTeardown) {
-                    return (api) => CallMenuApiFunc(api, "OnTeardownCall", helper);
+                    return (api) => CallMenuApiFunc(item.helper, "OnTeardownCall", api);
                 }
             }
         } else {
@@ -145,13 +156,13 @@ export function addItem(editor, funcName, details) {
         }
 
         if (item.hasAction) {
-            item.onAction = (api) => CallMenuApiFunc(api, "OnActionCall", helper);
+            item.onAction = (api) => CallMenuApiFunc(item.helper, "OnActionCall", api);
         } else {
             item.onAction = () => { };
         }
 
         if (item.hasFetch) {
-            item.fetch = (callback, context) => helper.invokeMethodAsync("OnFetchCall").then(r => callback(cleanObject(r.result)));
+            item.fetch = (callback, context) => item.helper.invokeMethodAsync("OnFetchCall").then(r => callback(cleanObject(r.result)));
         }
     }
 
@@ -169,3 +180,48 @@ export function addItem(editor, funcName, details) {
     editor.ui.registry[funcName](details.name, details);
 }
 
+window.convertElementToObject = (el) => {
+
+    if (!el)
+        return null;
+
+    var item = {
+        nodeName: el.nodeName,
+        nodeValue: el.nodeValue,
+        content: el.textContent,
+        children: null,
+        attributes: null
+    }
+
+    if (el.children && el.children.length > 0) {
+
+        item.children = [];
+
+        for (let i = 0; i < el.children.length; i++) {
+            let cEl = el.children[i];
+            let n = window.convertElementToObject(cEl);
+            if(n)
+                item.children.push(n);
+        }
+    }
+
+    if (el.attributes && el.attributes.length > 0) {
+
+        item.attributes = {}
+;
+        for (let i = 0; i < el.attributes.length; i++) {
+            let attr = el.attributes[i];
+
+            if (!attr.name.startsWith('data-mce'))
+                item.attributes[attr.name] = attr.value;
+        }
+
+        if (item.attributes.length == 0)
+            item.attributes = null;
+
+    }
+
+
+
+    return item;
+}

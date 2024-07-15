@@ -19,7 +19,21 @@ namespace NexCode.TinyMCE.Blazor
         public string EditorId => Id;
         public bool Intalised { get; private set; }
 
-        [Parameter] public string Html { get; set; } = string.Empty;
+
+        private string _html = string.Empty;
+        [Parameter]
+        public string Html
+        {
+            get => _html;
+            set
+            {
+                if (_html != value && Editor!=null)
+                { 
+                    Editor.SetContent(value);
+                }
+                _html = value;
+            }
+        } 
         [Parameter] public EventCallback<string> HtmlChanged { get; set; }
         
 
@@ -67,6 +81,7 @@ namespace NexCode.TinyMCE.Blazor
             {
                 Intalised = true;
                 Editor = editor;
+                await Editor.SetContent(_html);
                 StateHasChanged();
                 if(Intaliser!=null)
                     await Intaliser.DisposeAsync();

@@ -4,10 +4,11 @@
 
 Rich text goes below:
 
-<RichTextEditor OnInitalise="OnIntalise" @bind-Html="@Html">
+<RichTextEditor OnInitalise="OnIntalise" @bind-Html="@Html" @ref="RichTextEditor">
     <Plugins>
         <CustomPlugin Name="test">
             <MenuButton Text="Menu Item" Fetch="Fetch"/>
+            <ToggleButton Text="Toggle Me" OnSetup="Callback"/>
         </CustomPlugin>
     </Plugins>
 </RichTextEditor>
@@ -22,6 +23,9 @@ Rich text goes below:
     @Html
 </div>
 
+<button @onclick="Call">
+    Click
+</button>
 
 @code
 {
@@ -54,5 +58,27 @@ display:inline-block;
             Text = $"Menu Item {i}",
                 OnAction = eventCallbackFactory.Create<EditorEvent>((ee) => ee.Editor.InsertContent($"Menu item {i}"))
         });
+    }
+
+    private RichTextEditor RichTextEditor { get; set; }
+
+    private async Task Call()
+    {
+        var sel = RichTextEditor.Editor.Selections;
+        var r = await sel.GetNode();
+        
+
+    }
+
+    private async Task Callback(EditorEvent obj)
+    {
+        var node = await obj.Editor.Selections.GetNode();
+        if (node == null)
+            return;
+
+        if ("A".Equals(node.Name, StringComparison.InvariantCultureIgnoreCase) || 
+            node.Children.Any(i => "A".Equals(i.Name, StringComparison.InvariantCultureIgnoreCase)))
+            obj.MenuApi.Active = true;
+
     }
 }

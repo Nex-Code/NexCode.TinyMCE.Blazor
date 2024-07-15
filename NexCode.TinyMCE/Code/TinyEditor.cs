@@ -4,6 +4,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
@@ -158,6 +160,16 @@ namespace NexCode.TinyMCE.Blazor.Code
         public ValueTask SetContent(string value);
         public ValueTask InsertContent(string value, object? args=null);
 
+
+        public EditorSelection Selections { get; }
+
+
+
+
+        public void On(string eventName, EventCallback callback);
+
+
+
     }
 
     public interface IJsEditor : IEditor
@@ -166,33 +178,27 @@ namespace NexCode.TinyMCE.Blazor.Code
         public ValueTask InvokeVoidAsync(string funcName, params object?[]? args);
     }
 
-
-
-    internal class TinyEditor : IJsEditor
+    public abstract class EditorBase
     {
 
         #region Intalisation and JS calling
 
         [CascadingParameter]
-        private IEditorScope? EditorScope { get; set; }
+        protected IEditorScope? EditorScope { get; set; }
 
-
-        public TinyEditor(IJSRuntime js) : this(js, null)
+        protected EditorBase(IJSRuntime js) : this(js, null)
         {
         }
 
-        public TinyEditor(IJSRuntime js, IEditorScope? scope)
+        protected EditorBase(IJSRuntime js, IEditorScope? scope)
         {
             Js = js;
             EditorScope = scope;
         }
 
-        private IJSRuntime Js { get; }
+        protected IJSRuntime Js { get; }
 
-      
-        
-
-        private async ValueTask<IJSObjectReference> GetEditor()
+        protected virtual async ValueTask<IJSObjectReference> GetEditor()
         {
             if (EditorScope == null || !EditorScope.Intalised)
                 return await Js.InvokeAsync<IJSObjectReference>("tinymce.activeEditor");
@@ -214,7 +220,18 @@ namespace NexCode.TinyMCE.Blazor.Code
         }
 
         #endregion
+    }
 
+    internal class TinyEditor : EditorBase, IJsEditor
+    {
+
+        public TinyEditor(IJSRuntime js) : base(js)
+        {
+        }
+
+        public TinyEditor(IJSRuntime js, IEditorScope? scope) : base(js, scope)
+        {
+        }
 
         public async ValueTask<string?> GetContent()
         {
@@ -231,6 +248,77 @@ namespace NexCode.TinyMCE.Blazor.Code
         {
             await InvokeVoidAsync("insertContent", value, args);
         }
+
+        private EditorSelection _selection;
+        public EditorSelection Selections => new EditorSelection(Js, EditorScope);
+
+
+    }
+
+
+
+    public class EditorSelection : EditorBase
+    {
+
+        public EditorSelection(IJSRuntime js) : base(js)
+        {
+        }
+
+        public EditorSelection(IJSRuntime js, IEditorScope? scope) : base(js, scope)
+        {
+        }
+
+        /*protected override async ValueTask<IJSObjectReference> GetEditor()
+        {
+            var js = await base.GetEditor();
+            var selectJs = await js.InvokeAsync<IJSObjectReference>("selection");
+            return selectJs;
+        }*/
+
+        public override async ValueTask<T> InvokeAsync<T>(string funcName, params object?[]? args) =>
+            await base.InvokeAsync<T>($"selection.{funcName}", args);
+      
+
+        public virtual async ValueTask InvokeVoidAsync(string funcName, params object?[]? args) =>
+            await base.InvokeVoidAsync($"selection.{funcName}", args);
+
+
+
+        /*public ValueTask<IJSObjectReference> GetNode() => InvokeAsync<IJSObjectReference>("selection.getNode");
+        public ValueTask<string> GetSel() => InvokeAsync<string>("getSel");*/
+
+
+
+        public async ValueTask<HtmlNode?> GetNode()
+        {
+            var r = await InvokeAsync<IJSObjectReference>("getNode");
+            var node = await Js.InvokeAsync<HtmlNode?>("convertElementToObject", r);
+            return node;
+        } 
+
+
+        public ValueTask<string> GetContent() => InvokeAsync<string>("getContent");
+        public ValueTask SetContent(string html) => InvokeVoidAsync("setContent", html);
+
+
+
+    }
+
+
+    public sealed class HtmlNode
+    {
+
+        [JsonPropertyName("nodeName")]
+        public string? Name { get; set; }
+        [JsonPropertyName("nodeValue")]
+        public string? Value { get; set; }
+        [JsonPropertyName("content")]
+        public string? Content { get; set; }
+        [JsonPropertyName("children")]
+        public IEnumerable<HtmlNode> Children { get; set; } = Array.Empty<HtmlNode>();
+
+        [JsonPropertyName("attributes")]
+        public IDictionary<string, string?> Attributes { get; set; } = new Dictionary<string, string?>();
 
     }
 

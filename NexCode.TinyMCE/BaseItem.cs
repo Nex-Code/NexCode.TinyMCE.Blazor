@@ -91,19 +91,21 @@ namespace NexCode.TinyMCE.Blazor
 
 
         [JSInvokable]
-        public async ValueTask<MenuEventResult> OnSetupCall(MenuApi item) => await CallEvent(item, OnSetup);
+        public async Task<MenuApi> OnSetupCall(MenuApi item) => await CallEvent(item, OnSetup);
 
         [JSInvokable]
-        public async ValueTask<MenuEventResult> OnTeardownCall(MenuApi item) => await CallEvent(item, OnTeardown);
+        public async Task<MenuApi> OnTeardownCall(MenuApi item) => await CallEvent(item, OnTeardown);
 
         [JSInvokable]
-        public async ValueTask<MenuEventResult> OnActionCall(MenuApi item) => await CallEvent(item, OnAction);
+        public async Task<MenuApi> OnActionCall(MenuApi item) => await CallEvent(item, OnAction);
 
-        protected async Task<MenuEventResult> CallEvent(MenuApi apiItem, EventCallback<EditorEvent> handler)
+        protected async Task<MenuApi> CallEvent(MenuApi apiItem, EventCallback<EditorEvent> handler)
         {
             if (handler.HasDelegate)
-                await handler.InvokeAsync(new EditorEvent(apiItem, Editor));
-            return new MenuEventResult() { Api = apiItem };
+                await handler.InvokeAsync(new EditorEvent(apiItem, Editor, new TinyEventFactory(this)));
+
+            return apiItem;
+            //return new MenuEventResult() { Api = apiItem };
         }
 
 
@@ -111,18 +113,20 @@ namespace NexCode.TinyMCE.Blazor
 
     }
 
-    public record EditorEvent(MenuApi MenuApi, IEditor? Editor);
+    public record EditorEvent(MenuApi MenuApi, IEditor? Editor, TinyEventFactory EventFactory);
 
 
 
-    public abstract record EventResult();
+    public abstract class EventResult{};
 
-    public abstract record EventResult<TApi> : EventResult where TApi: MenuApi
+    public abstract class EventResult<TApi> : EventResult where TApi: MenuApi
     {
         public TApi Api { get; init; }
     }
 
-    public record MenuEventResult : EventResult<MenuApi>;
+    public class MenuEventResult : EventResult<MenuApi>
+    {
+    };
 
 
 
