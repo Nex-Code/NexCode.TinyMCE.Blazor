@@ -4,7 +4,7 @@
 
 Rich text goes below:
 
-<RichTextEditor OnInitalise="OnIntalise" @bind-Html="@Html" @ref="RichTextEditor">
+@* <RichTextEditor OnInitalise="OnIntalise" @bind-Html="@Html" @ref="RichTextEditor">
     <Plugins>
         <CustomPlugin Name="test">
             <MenuButton Text="Menu Item" Fetch="Fetch"/>
@@ -21,24 +21,33 @@ Rich text goes below:
             <ToggleButton Text="Toggle Me" OnSetup="Callback" />
         </CustomPlugin>
     </Plugins>
-</RichTextEditor>
+</RichTextEditor> *@
 
 
 <div>
-    @((MarkupString)Html)
+    @if (Editing)
+    {
+        <RichTextEditor OnInitalise="OnIntalise" @bind-Html="@Html" @ref="RichTextEditor" Inline/>
+    }
+    else
+    {
+        @((MarkupString)Html)
+    }
+    
 </div>
 
-
+<hr/>
 <div>
     @Html
 </div>
 
-<button @onclick="Call">
+<button @onclick="()=>Editing=true">
     Click
 </button>
 
 @code
 {
+    private bool Editing { get; set; }
     private string Html { get; set; } = "<span>This is a token. You can use it as a tempalte</span>";
 
     private void OnIntalise(EditorOptions obj)
@@ -72,13 +81,7 @@ display:inline-block;
 
     private RichTextEditor RichTextEditor { get; set; }
 
-    private async Task Call()
-    {
-        var sel = RichTextEditor.Editor.Selections;
-        var r = await sel.GetNode();
-        
-
-    }
+  
 
     private async Task Callback(EditorEvent obj)
     {

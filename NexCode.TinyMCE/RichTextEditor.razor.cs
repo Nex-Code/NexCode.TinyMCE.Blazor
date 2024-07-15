@@ -40,6 +40,14 @@ namespace NexCode.TinyMCE.Blazor
 
         private bool _loaded;
 
+        private string IntalisedHtml { get; set; }
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+            IntalisedHtml = _html;
+        }
+
+
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender && !DisableLoadOnRender)
@@ -63,10 +71,12 @@ namespace NexCode.TinyMCE.Blazor
             {
                 Intalised = true;
                 Editor = editor;
-                await Editor.SetContent(Html);
+                
                 StateHasChanged();
                 if(Intaliser!=null)
                     await Intaliser.DisposeAsync();
+
+                await Editor.SetContent(Html);
             }
 
             async ValueTask CallOnInitalise(EditorOptions options)

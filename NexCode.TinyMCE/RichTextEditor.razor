@@ -17,11 +17,15 @@
 
         @if (Inline)
         {
-            <div id="@Id"/>
+            <div id="@Id">
+                    @((MarkupString)IntalisedHtml)
+            </div>
         }
         else
         {
-            <textarea id="@Id"/>
+            <textarea id="@Id">
+                    @IntalisedHtml
+            </textarea>
         }
         
         </CascadingValue>
