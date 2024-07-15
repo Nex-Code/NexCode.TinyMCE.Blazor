@@ -29,6 +29,23 @@
     [JSInvokable]
     public async Task OnChange() =>await UpdateHtml();
 
+    private string _html = string.Empty;
+    [Parameter]
+    public string Html
+    {
+        get => _html;
+        set
+        {
+            if (_html != value && Editor!=null)
+            { 
+                Editor.SetContent(value);
+            }
+            _html = value;
+        }
+    } 
+    [Parameter] public EventCallback<string> HtmlChanged { get; set; }
 
+    [Parameter]
+    public bool Inline { get; set; }
 
 }

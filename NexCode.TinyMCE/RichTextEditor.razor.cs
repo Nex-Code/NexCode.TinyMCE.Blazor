@@ -19,24 +19,6 @@ namespace NexCode.TinyMCE.Blazor
         public string EditorId => Id;
         public bool Intalised { get; private set; }
 
-
-        private string _html = string.Empty;
-        [Parameter]
-        public string Html
-        {
-            get => _html;
-            set
-            {
-                if (_html != value && Editor!=null)
-                { 
-                    Editor.SetContent(value);
-                }
-                _html = value;
-            }
-        } 
-        [Parameter] public EventCallback<string> HtmlChanged { get; set; }
-        
-
         [Parameter]
         public EventCallback<EditorOptions> OnInitalise { get; set; }
 
@@ -94,6 +76,8 @@ namespace NexCode.TinyMCE.Blazor
                 options.Add("onchange", nameof(OnChange));
                 options.Add("onblur", nameof(OnChange));
 
+                if (Inline)
+                    options.Add("inline", true);
 
                 if (OnInitalise.HasDelegate)
                     await OnInitalise.InvokeAsync(options);
