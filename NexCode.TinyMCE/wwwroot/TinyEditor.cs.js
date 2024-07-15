@@ -15,6 +15,8 @@
 //    });
 //}
 
+
+
 export function init(options) {
 
     Object.getOwnPropertyNames(options).forEach((el) => {
@@ -95,6 +97,10 @@ export function addItem(editor, funcName, details) {
     }
 
     const SetMenuApi = (api, r) => {
+
+        if (!r)
+            return;
+
         api.setEnabled(r.enabled);
 
         if (api.setActive != undefined)

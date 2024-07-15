@@ -164,12 +164,6 @@ namespace NexCode.TinyMCE.Blazor.Code
         public EditorSelection Selections { get; }
 
 
-
-
-        public void On(string eventName, EventCallback callback);
-
-
-
     }
 
     public interface IJsEditor : IEditor
@@ -251,8 +245,6 @@ namespace NexCode.TinyMCE.Blazor.Code
 
         private EditorSelection _selection;
         public EditorSelection Selections => new EditorSelection(Js, EditorScope);
-
-
     }
 
 
