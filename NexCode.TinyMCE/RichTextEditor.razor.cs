@@ -63,7 +63,6 @@ namespace NexCode.TinyMCE.Blazor
             {
                 Intalised = true;
                 Editor = editor;
-                await Editor.SetContent(_html);
                 StateHasChanged();
                 if(Intaliser!=null)
                     await Intaliser.DisposeAsync();

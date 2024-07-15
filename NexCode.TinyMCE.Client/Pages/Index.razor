@@ -14,6 +14,16 @@ Rich text goes below:
 </RichTextEditor>
 
 
+<RichTextEditor OnInitalise="OnIntalise" @bind-Html="@Html" @ref="RichTextEditor" Inline>
+    <Plugins>
+        <CustomPlugin Name="test">
+            <MenuButton Text="Menu Item" Fetch="Fetch" />
+            <ToggleButton Text="Toggle Me" OnSetup="Callback" />
+        </CustomPlugin>
+    </Plugins>
+</RichTextEditor>
+
+
 <div>
     @((MarkupString)Html)
 </div>
@@ -29,7 +39,7 @@ Rich text goes below:
 
 @code
 {
-    private string Html { get; set; }
+    private string Html { get; set; } = "<span>This is a token. You can use it as a tempalte</span>";
 
     private void OnIntalise(EditorOptions obj)
     {
