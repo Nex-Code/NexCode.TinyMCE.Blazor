@@ -163,7 +163,7 @@ namespace NexCode.TinyMCE.Blazor.Code
 
         public EditorSelection Selections { get; }
 
-        public EditorUi EditorUi { get; }
+        public EditorUi Ui { get; }
     }
 
     public interface IJsEditor : IEditor
