@@ -163,7 +163,7 @@ namespace NexCode.TinyMCE.Blazor.Code
 
         public EditorSelection Selections { get; }
 
-        public Ui Ui { get; }
+        public EditorUi EditorUi { get; }
     }
 
     public interface IJsEditor : IEditor
@@ -244,16 +244,16 @@ namespace NexCode.TinyMCE.Blazor.Code
         }
 
         public EditorSelection Selections => new EditorSelection(Js, EditorScope);
-        public Ui Ui => new Ui(Js, EditorScope);
+        public EditorUi Ui => new EditorUi(Js, EditorScope);
     }
 
-    public class Ui : EditorBase
+    public class EditorUi : EditorBase
     {
-        public Ui(IJSRuntime js) : base(js)
+        public EditorUi(IJSRuntime js) : base(js)
         {
         }
 
-        public Ui(IJSRuntime js, IEditorScope? scope) : base(js, scope)
+        public EditorUi(IJSRuntime js, IEditorScope? scope) : base(js, scope)
         {
         }
 
