@@ -163,7 +163,7 @@ namespace NexCode.TinyMCE.Blazor.Code
 
         public EditorSelection Selections { get; }
 
-
+        public Ui Ui { get; }
     }
 
     public interface IJsEditor : IEditor
@@ -243,11 +243,35 @@ namespace NexCode.TinyMCE.Blazor.Code
             await InvokeVoidAsync("insertContent", value, args);
         }
 
-        private EditorSelection _selection;
         public EditorSelection Selections => new EditorSelection(Js, EditorScope);
+        public Ui Ui => new Ui(Js, EditorScope);
     }
 
+    public class Ui : EditorBase
+    {
+        public Ui(IJSRuntime js) : base(js)
+        {
+        }
 
+        public Ui(IJSRuntime js, IEditorScope? scope) : base(js, scope)
+        {
+        }
+
+        public override async ValueTask<T> InvokeAsync<T>(string funcName, params object?[]? args) =>
+            await base.InvokeAsync<T>($"ui.{funcName}", args);
+
+
+        public virtual async ValueTask InvokeVoidAsync(string funcName, params object?[]? args) =>
+            await base.InvokeVoidAsync($"ui.{funcName}", args);
+
+
+        public async ValueTask Hide() => await InvokeVoidAsync("hide");
+        public async ValueTask Show() => await InvokeVoidAsync("show");
+
+        public async ValueTask<bool> IsEnabled() => await InvokeAsync<bool>("isEnabled");
+        public async ValueTask SetEnabled(bool state) => await InvokeVoidAsync("setEnabled", state);
+
+    }
 
     public class EditorSelection : EditorBase
     {
@@ -260,12 +284,6 @@ namespace NexCode.TinyMCE.Blazor.Code
         {
         }
 
-        /*protected override async ValueTask<IJSObjectReference> GetEditor()
-        {
-            var js = await base.GetEditor();
-            var selectJs = await js.InvokeAsync<IJSObjectReference>("selection");
-            return selectJs;
-        }*/
 
         public override async ValueTask<T> InvokeAsync<T>(string funcName, params object?[]? args) =>
             await base.InvokeAsync<T>($"selection.{funcName}", args);
@@ -273,13 +291,6 @@ namespace NexCode.TinyMCE.Blazor.Code
 
         public virtual async ValueTask InvokeVoidAsync(string funcName, params object?[]? args) =>
             await base.InvokeVoidAsync($"selection.{funcName}", args);
-
-
-
-        /*public ValueTask<IJSObjectReference> GetNode() => InvokeAsync<IJSObjectReference>("selection.getNode");
-        public ValueTask<string> GetSel() => InvokeAsync<string>("getSel");*/
-
-
 
         public async ValueTask<HtmlNode?> GetNode()
         {
