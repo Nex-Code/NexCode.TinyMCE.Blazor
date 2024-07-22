@@ -35,8 +35,13 @@ export function init(options) {
 
 
     options.setup = (editor) => {
-        editor.on("change", e => options.DotNetHelper.invokeMethodAsync(options.onchange));
-        editor.on("blue", e => options.DotNetHelper.invokeMethodAsync(options.onblur));
+
+        if (options.onchange) {
+            editor.on("change", e => options.DotNetHelper.invokeMethodAsync(options.onchange));
+        }
+        if (options.onblur) {
+            editor.on("blur", e => options.DotNetHelper.invokeMethodAsync(options.onblur));
+        }
     };
 
 

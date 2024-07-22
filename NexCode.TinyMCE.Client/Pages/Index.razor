@@ -4,36 +4,8 @@
 
 Rich text goes below:
 
-@* <RichTextEditor OnInitalise="OnIntalise" @bind-Html="@Html" @ref="RichTextEditor">
-    <Plugins>
-        <CustomPlugin Name="test">
-            <MenuButton Text="Menu Item" Fetch="Fetch"/>
-            <ToggleButton Text="Toggle Me" OnSetup="Callback"/>
-        </CustomPlugin>
-    </Plugins>
-</RichTextEditor>
-
-
-<RichTextEditor OnInitalise="OnIntalise" @bind-Html="@Html" @ref="RichTextEditor" Inline>
-    <Plugins>
-        <CustomPlugin Name="test">
-            <MenuButton Text="Menu Item" Fetch="Fetch" />
-            <ToggleButton Text="Toggle Me" OnSetup="Callback" />
-        </CustomPlugin>
-    </Plugins>
-</RichTextEditor> *@
-
-
 <div>
-    @if (Editing)
-    {
-        <RichTextEditor OnInitalise="OnIntalise" @bind-Html="@Html" @ref="RichTextEditor" Inline/>
-    }
-    else
-    {
-        @((MarkupString)Html)
-    }
-    
+    <RichTextEditor OnInitalise="OnIntalise" @bind-Html="@Html" @ref="RichTextEditor"/>
 </div>
 
 <hr/>
@@ -41,7 +13,7 @@ Rich text goes below:
     @Html
 </div>
 
-<button @onclick="()=>Editing=true">
+<button @onclick="Callback">
     Click
 </button>
 
@@ -81,17 +53,9 @@ display:inline-block;
 
     private RichTextEditor RichTextEditor { get; set; }
 
-  
 
-    private async Task Callback(EditorEvent obj)
+    private async Task Callback()
     {
-        var node = await obj.Editor.Selections.GetNode();
-        if (node == null)
-            return;
-
-        if ("A".Equals(node.Name, StringComparison.InvariantCultureIgnoreCase) || 
-            node.Children.Any(i => "A".Equals(i.Name, StringComparison.InvariantCultureIgnoreCase)))
-            obj.MenuApi.Active = true;
-
+        await RichTextEditor.Editor.Ui.Hide();
     }
 }
