@@ -303,6 +303,11 @@ namespace NexCode.TinyMCE.Blazor.Code
         public ValueTask<string> GetContent() => InvokeAsync<string>("getContent");
         public ValueTask SetContent(string html) => InvokeVoidAsync("setContent", html);
 
+        public ValueTask<Bookmark> GetBookmark() => InvokeAsync<Bookmark>("getBookmark");
+
+        public ValueTask MoveToBookmark(Bookmark bm) => InvokeVoidAsync("moveToBookmark", bm);
+
+
 
 
     }
@@ -323,6 +328,12 @@ namespace NexCode.TinyMCE.Blazor.Code
         [JsonPropertyName("attributes")]
         public IDictionary<string, string?> Attributes { get; set; } = new Dictionary<string, string?>();
 
+    }
+
+    public sealed class Bookmark
+    {
+        public string Id { get; set; }
+        public bool Forward { get; set; }
     }
 
 }
