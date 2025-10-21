@@ -77,9 +77,17 @@ export function registerPlugin(id, buttons) {
                     }
                     item.fetch = (callback) => {
                         b.dotNetHelper.invokeMethodAsync("Fetch").then((r) => {
-                            var items = r.result;
-                            items.forEach(fetchFunc);
-                            callback(items);
+
+
+                            if (r.result) {
+                                var items = r.result;
+                                items.forEach(fetchFunc);
+                                callback(items);
+                            } else {
+                                r.forEach(fetchFunc);
+                                callback(items);
+                            }
+                            
                         })
                     };
                     break;
