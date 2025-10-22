@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="6.0.6" />
-    <PackageReference Include="TinyMCE" Version="6.8.6" />
+    <PackageReference Include="TinyMCE" Version="8.1.2" />
   </ItemGroup>
 
   <ItemGroup>
