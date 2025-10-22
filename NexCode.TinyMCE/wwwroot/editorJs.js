@@ -85,7 +85,7 @@ export function registerPlugin(id, buttons) {
                                 callback(items);
                             } else {
                                 r.forEach(fetchFunc);
-                                callback(items);
+                                callback(r);
                             }
                             
                         })
