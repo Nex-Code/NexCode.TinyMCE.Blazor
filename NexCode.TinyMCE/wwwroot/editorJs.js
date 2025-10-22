@@ -11,7 +11,8 @@ export function init(id, plugins, menubar, toolbar, branding) {
         plugins: plugins,
         toolbar: toolbar,
         menubar: menubar,
-        branding: branding
+        branding: branding,
+        license_key:"gpl"
     });
 }
 
