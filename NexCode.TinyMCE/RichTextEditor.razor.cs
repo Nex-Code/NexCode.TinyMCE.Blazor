@@ -11,7 +11,7 @@ using NexCode.TinyMCE.Blazor.Plugins;
 
 namespace NexCode.TinyMCE.Blazor
 {
-    public partial class RichTextEditor : ComponentBase
+    public partial class RichTextEditor : ComponentBase, IAsyncDisposable
     {
         public string Id { get; } = "editor_"+ Guid.NewGuid().ToString().Replace("-","");
 
@@ -128,5 +128,10 @@ namespace NexCode.TinyMCE.Blazor
         }
 
 
+        public async ValueTask DisposeAsync()
+        {
+            await Remove();
+            await Js.DisposeAsync();
+        }
     }
 }
