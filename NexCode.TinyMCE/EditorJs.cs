@@ -11,15 +11,14 @@ namespace NexCode.TinyMCEEditor
     internal class EditorJs : IAsyncDisposable
     {
 
-        private readonly Lazy<Task<IJSObjectReference>> _moduleTask;
+        private Task<IJSObjectReference> _moduleTask;
         private JsLoader JsLoader { get; }
 
 
         public EditorJs(IJSRuntime jsRuntime, JsLoader jsLoader)
         {
             JsLoader = jsLoader;
-            _moduleTask = new(() => jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/NexCode.TinyMCE.Blazor/editorJs.js").AsTask());
+            _moduleTask = jsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/NexCode.TinyMCE.Blazor/editorJs.js").AsTask();
         }
 
         #region boring bits
@@ -55,7 +54,7 @@ namespace NexCode.TinyMCEEditor
             }
 
 
-            var module = await _moduleTask.Value;
+            var module = await _moduleTask;
             await module.InvokeVoidAsync("init", id, plugins, menubar, toolbar, externalPlugins);
         }
 
@@ -67,21 +66,24 @@ namespace NexCode.TinyMCEEditor
             var menuItem = plugin.MenuItems.Select(i => JsConverter.Process(i, plugin.Name));
             var uiElements = toolbar.Concat(menuItem).ToArray();
 
-            var module = await _moduleTask.Value;
+            var module = await _moduleTask;
             await module.InvokeVoidAsync("registerPlugin", plugin.Name.ToLower(), uiElements);
         }
 
         public async ValueTask RemovePlugin(string name)
         {
-            await (await _moduleTask.Value).InvokeVoidAsync("removePlugin", name);
+            await (await _moduleTask).InvokeVoidAsync("removePlugin", name);
         }
 
         public async ValueTask DisposeAsync()
         {
-            if (_moduleTask.IsValueCreated)
+
+            if (_moduleTask != null)
             {
-                var module = await _moduleTask.Value;
+                var module = await _moduleTask;
                 await module.DisposeAsync();
+                _moduleTask.Dispose();
+                _moduleTask = null!;
             }
         }
 
@@ -91,7 +93,7 @@ namespace NexCode.TinyMCEEditor
 
         public async ValueTask<string?> GetContent(string id, object? args = null)
         {
-            var content =  await (await _moduleTask.Value).InvokeAsync<string?>("getContent", id, args);
+            var content =  await (await _moduleTask).InvokeAsync<string?>("getContent", id, args);
             if(!content.IsNullOrWhiteSpace())
                 content = content.Replace("<!--!-->", "").Trim();
             return content;
@@ -99,51 +101,51 @@ namespace NexCode.TinyMCEEditor
 
         public async ValueTask<string?> GetParam(string id, string name, string defaultValue, string type)
         {
-            return await (await _moduleTask.Value).InvokeAsync<string?>("getParam", id, name, defaultValue, type);
+            return await (await _moduleTask).InvokeAsync<string?>("getParam", id, name, defaultValue, type);
         }
 
         public async ValueTask<bool> HasPlugin(string id, string name, bool loaded = false)
         {
-            return await (await _moduleTask.Value).InvokeAsync<bool>("hasPlugin", id, name, loaded);
+            return await (await _moduleTask).InvokeAsync<bool>("hasPlugin", id, name, loaded);
         }
 
 
         public async ValueTask Hide(string id)
         {
-            await (await _moduleTask.Value).InvokeVoidAsync("hide", id);
+            await (await _moduleTask).InvokeVoidAsync("hide", id);
         }
         public async ValueTask<string?> Load(string id)
         {
-            return await (await _moduleTask.Value).InvokeAsync<string?>("load", id);
+            return await (await _moduleTask).InvokeAsync<string?>("load", id);
         }
 
         public async ValueTask Remove(string id)
         {
-            await (await _moduleTask.Value).InvokeVoidAsync("remove", id);
+            await (await _moduleTask).InvokeVoidAsync("remove", id);
         }
 
         public async ValueTask<string?> Save(string id)
         {
-            return await (await _moduleTask.Value).InvokeAsync<string?>("save", id);
+            return await (await _moduleTask).InvokeAsync<string?>("save", id);
         }
 
         public async ValueTask<string?> SetContent(string id, string? content)
         {
-            return await (await _moduleTask.Value).InvokeAsync<string?>("setContent", id, content);
+            return await (await _moduleTask).InvokeAsync<string?>("setContent", id, content);
         }
 
         public async ValueTask<string?> InsertContent(string id, string? content, object? args=null)
         {
-            return await (await _moduleTask.Value).InvokeAsync<string?>("insertContent", id, content, args);
+            return await (await _moduleTask).InvokeAsync<string?>("insertContent", id, content, args);
         }
 
         public async ValueTask<bool> SetProgressState(string id, bool state, int? time)
         {
-            return await (await _moduleTask.Value).InvokeAsync<bool>("setProgressState", id,state, time);
+            return await (await _moduleTask).InvokeAsync<bool>("setProgressState", id,state, time);
         }
         public async ValueTask Show(string id)
         {
-            await (await _moduleTask.Value).InvokeAsync<string?>("show", id);
+            await (await _moduleTask).InvokeAsync<string?>("show", id);
         }
 
 

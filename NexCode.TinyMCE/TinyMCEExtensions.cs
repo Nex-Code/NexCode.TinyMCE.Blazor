@@ -9,7 +9,7 @@ namespace NexCode.TinyMCEEditor
 
         public static IServiceCollection AddTinyMCE(this IServiceCollection services)
         {
-            services.AddScoped<EditorJs>();
+            services.AddTransient<EditorJs>();
             services.AddTransient<JsLoader>();
 
             services.AddSingleton((b) => new RichTextDefaultEditorOptions()
@@ -17,14 +17,6 @@ namespace NexCode.TinyMCEEditor
                 Plugins = Defaults.Plugins,
                 Toolbar = Defaults.Toolbar,
             });
-
-
-            var servies = services.Select(i => i.ServiceType.FullName).ToArray();
-            var servies2 = services.Select(i => i.ImplementationInstance?.GetType().FullName??"missing").ToArray();
-            var s = string.Join(Environment.NewLine, servies);
-            var s2 = string.Join(Environment.NewLine, servies2);
-            Console.WriteLine(s);
-
 
             if (services.All(i => i.ServiceType != typeof(RichTextDefaultEditorOptions)))
                 services.AddScoped<RichTextDefaultEditorOptions>();

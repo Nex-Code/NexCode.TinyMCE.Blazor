@@ -4,16 +4,21 @@
 @using NexCode.TinyMCE.Blazor.Plugins.Toolbar
 
 
+@if (Show)
+{
+    <RichTextEditor DynamicPlugins="@(new[] { Plugin })" @ref="RichTextEditor" >
+        @((MarkupString)Html)
+    </RichTextEditor>
+}
 
-<RichTextEditor DynamicPlugins="@(new[] { Plugin })" @ref="RichTextEditor" >
-    <strong>Test</strong>
-</RichTextEditor>
-
+<a  href="/2">
+    Go
+</a>
 
 @code
 {
-
-
+    private string Html { get; set; }
+    private bool Show { get; set; } 
     private RichTextEditor RichTextEditor { get; set; }
 
     [Inject]
@@ -24,7 +29,7 @@
         Plugin = new Plugin()
         {
             Name = "custom",
-          
+
             Toolbar = new []
             {
                 new MenuToolbarButtonGroup(){Text = "Test", 
@@ -47,8 +52,8 @@
             /*MenuItems = new []
             {
                 new BasicMenuItem(){Text = "Test Menu", Id = "basicitem"}
-            }*/
-            
+                }*/
+
         };
     }
 
@@ -60,7 +65,7 @@
             Plugins = "custom",
             Toolbar = "custom",
             MenuBar = "custom"
-    
+
     };
 
 
@@ -73,6 +78,15 @@
         await module.InvokeVoidAsync("showDialog", RichTextEditor.Id);
 
     }
-    
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await Task.Delay(TimeSpan.FromSeconds(1));
+        Show = true;
+        StateHasChanged();
+        await Task.Delay(TimeSpan.FromSeconds(5));
+        Html = "askljfnaslfjibasf";
+    }
 
 }
